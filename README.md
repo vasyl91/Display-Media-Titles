@@ -57,7 +57,7 @@ Check this [tutorial](https://www.youtube.com/watch?v=H3tnNVyCJfk) in case you h
 		
 		[<img src="./images/11.png" width="50%">](./images/11.png)
 
-  If you pick up the font .ttf on phone and everything seems to be fine but eventually the font isn't loaded then make sure that you're using the stock file manager (com.google.android.documentsui) and allow the app to `Change system settings`.
+   If you pick up the font .ttf on phone and everything seems to be fine but eventually the font isn't loaded then make sure that you're using the stock file manager (com.google.android.documentsui) and allow the app to `Change system settings`.
 
 * Displaying FYT player media titles:
 
