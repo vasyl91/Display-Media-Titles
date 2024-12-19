@@ -250,7 +250,7 @@ class NotificationListener : NotificationListenerService() {
                     removeWindowView()
                 }
             } else if (currentState == 3) {
-                // prevents youtube live to add view every ~second
+                // prevents youtube live to add the view every ~second
                 var dur = meta?.getLong(MediaMetadata.METADATA_KEY_DURATION)
                 if (dur != 0.toLong() || paused) {
                     setStatus(2)
