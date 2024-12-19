@@ -55,10 +55,9 @@ Check this [tutorial](https://www.youtube.com/watch?v=H3tnNVyCJfk) in case you h
 		
 		DocumentsUI-10.apk is meant for FYT devices and probably won't get along with phones. If you encounter it on the phone you'll have to find according app yourself.
 		
-		Changing the dafault file picker app to the built-in app might also come in handy. Different devices different solutions, finding them is up to you.
-
 		[<img src="./images/11.png" width="50%">](./images/11.png)
 
+ If you pick up the font .ttf on phone and everything seems to be fine but eventually the font isn't loaded then make sure that you're using the stock file manager (com.google.android.documentsui) and allow the app to `Change system settings`.
 
 * Displaying FYT player media titles:
 
