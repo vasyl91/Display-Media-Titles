@@ -47,8 +47,6 @@ Check this [tutorial](https://www.youtube.com/watch?v=H3tnNVyCJfk) in case you h
 
 	Very simple and intuitive layout allows user to set the left margin and width of the view depending on the device display width. It also provides following features: caption height, font size, color and typeface, background color, .ttf fonts. Try it with long titles for proper setting.
 
-	Version 1.0.9 offers the double view function which as the name states adds the second view on top of the previous one improving captions visibility. However this function still won't allow the view to appear on top of the system's views (i.e. themed launcher's status bar), only the system app allows that. This feature is disabled for system apps.
-
 	- .ttf fonts:
 	
 		If you encounter `Storage Access Framework is currently not available` toast, then please install [DocumentsUI-10.apk](https://github.com/vasyl91/Display-Media-Titles/releases/download/v1.0.8/DocumentsUI-10.apk) (credit to [FYTuis7862BinRepo](https://github.com/hvdwolf/FYTuis7862BinRepo) by [hvdwolf](https://github.com/hvdwolf)).

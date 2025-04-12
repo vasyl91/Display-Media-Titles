@@ -41,8 +41,6 @@
 
     <string name="display_ui">Wyświetlaj interfejs:</string>
     <string name="autostart">Autostart:</string>
-    <string name="display_artist">Wyświetlaj wykonawcę:</string>
-    <string name="double_view">Podwójny widok:</string>
 
     <string name="song_str">%1$s</string>   
     <string name="artist_and_song_str">%1$s - %2$s</string>

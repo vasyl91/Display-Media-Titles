@@ -42,8 +42,6 @@
 
     <string name="display_ui">UI 표시하기:</string>
     <string name="autostart">부팅시 시작:</string>
-    <string name="display_artist">예술가 표시하기:</string>
-    <string name="double_view">이중보기:</string>    
 
     <string name="song_str">%1$s</string>   
     <string name="artist_and_song_str">%1$s - %2$s</string>
