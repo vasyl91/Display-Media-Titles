@@ -8,7 +8,7 @@ It also supports original FYT player but this requires a simple [launcher modifi
 
 ## Installation
 
-App requires five permissions:
+App requires six permissions:
 * Notification access to be able to read media metadata.
 * Display over other apps to properly display titles.
 * Battery optimization to keep service alive.
