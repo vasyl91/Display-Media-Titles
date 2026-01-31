@@ -17,10 +17,10 @@ class SecretCode : BroadcastReceiver() {
             editor.putBoolean("UI", true)
             editor.apply()
             try {
-                val i = Intent()
-                i.setClassName("vasyl.titles", "vasyl.titles.MainActivity")
-                i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                context.startActivity(i)
+                val intent = Intent(context, MainActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                }
+                context.startActivity(intent)
             } catch (e: ActivityNotFoundException) {
                 e.printStackTrace()
             }

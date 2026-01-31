@@ -1,4 +1,4 @@
-package vasyl.titles
+package vasyl.titles.colorpicker
 
 import android.content.Context
 import android.graphics.Canvas
@@ -10,6 +10,7 @@ import android.util.TypedValue
 import androidx.annotation.ColorInt
 import androidx.annotation.Dimension
 import androidx.appcompat.widget.AppCompatSeekBar
+import vasyl.titles.R
 
 internal class MaterialColorPickerTextSeekBar : AppCompatSeekBar {
     private var textPaint: Paint? = null
@@ -50,7 +51,7 @@ internal class MaterialColorPickerTextSeekBar : AppCompatSeekBar {
 
             try {
                 textColor = typedArray.getColor(
-                    R.styleable.MaterialColorPickerTextSeekBar_android_textColor,
+                    R.styleable.MaterialColorPickerTextSeekBar_android_textColorHint,
                     -0x1000000
                 )
 

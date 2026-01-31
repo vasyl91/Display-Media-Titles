@@ -1,4 +1,4 @@
-package vasyl.titles
+package vasyl.titles.colorpicker
 
 import androidx.annotation.IntRange
 

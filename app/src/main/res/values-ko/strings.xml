@@ -41,7 +41,14 @@
     <string name="fyt_file">파일 이름</string>
 
     <string name="display_ui">UI 표시하기:</string>
+    <string name="display_ui_summary">다이얼러 앱을 열고 <b>*#*#3368#*#*</b> 를 입력하여 UI를 다시 표시하세요</string>
     <string name="autostart">부팅시 시작:</string>
+    <string name="autostart_app_summary">FYT 기기용 - 시스템 기본 자동 시작 옵션을 사용하세요</string>
+    <string name="display_artist">아티스트 표시:</string>
+    <string name="display_titles">제목 표시:</string>
+    <string name="exclude_for_widget">위젯에서 제외:</string>
+    <string name="exclude_summary">제외된 앱은 위젯에 영향을 주지 않습니다</string>
+    <string name="exclude_button">앱 제외</string>
 
     <string name="song_str">%1$s</string>   
     <string name="artist_and_song_str">%1$s - %2$s</string>
@@ -55,8 +62,12 @@
     <string name="draw_over_apps">다른 앱 위에 표시</string>
     <string name="storage_permissions">저장 권한</string>
 
-    <string name="materialcolorpicker__errHex">Hex Code Format incorrect</string>
+    <string name="materialcolorpicker__errHex">Hex 코드 형식이 잘못되었습니다</string>
     <string name="materialcolorpicker__inputColor">색상: </string>
     <string name="materialcolorpicker__btnSelectColor">선택</string>
     <string name="materialcolorpicker__hash" translatable="false">#</string>
+
+    <string name="widget_description">음악 위젯</string>
+    <string name="app_list_dialog">선택된 앱의 제목은 표시되지 않습니다</string>
+    <string name="app_filter_class" translatable="false"></string>
 </resources>

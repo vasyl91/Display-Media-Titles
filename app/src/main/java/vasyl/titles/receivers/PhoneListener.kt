@@ -8,11 +8,15 @@ import android.telephony.TelephonyManager
 @Suppress("DEPRECATION")
 class PhoneListener : PhoneStateListener() {
     @Deprecated("Deprecated in Java")
-    override fun onCallStateChanged(state: Int, incomingNumber: String) {
+    override fun onCallStateChanged(state: Int, incomingNumber: String?) {
         super.onCallStateChanged(state, incomingNumber)
 
         when (state) {
-            TelephonyManager.CALL_STATE_IDLE -> CALLING = false
+            TelephonyManager.CALL_STATE_IDLE -> {
+                CALLING = false
+                // Call has ended
+                NotificationListener.setDefaultStatusFromCompanion()
+            }
             TelephonyManager.CALL_STATE_OFFHOOK -> CALLING = true
             TelephonyManager.CALL_STATE_RINGING -> CALLING = true
             else -> {}

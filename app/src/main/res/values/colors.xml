@@ -5,6 +5,8 @@
     <color name="primaryDark">#D6C08A</color>
     <color name="primaryLight">#F8EECF</color>   
     <color name="transparent">#FFFFFF00</color>
+    <color name="light_gray">#FFAAAAAA</color>
+    <color name="colorAccent">#ff4285f4</color>
 
     <color name="materialcolorpicker__white">#ffffff</color>
     <color name="materialcolorpicker__red">#f44336</color>

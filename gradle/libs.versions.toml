@@ -1,14 +1,20 @@
 [versions]
-agp = "8.7.1"
-kotlin = "1.9.0"
-coreKtx = "1.13.1"
+agp = "8.10.1"
+coreKtx = "1.16.0"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
-appcompat = "1.7.0"
+appcompat = "1.7.1"
 material = "1.12.0"
-activity = "1.9.1"
-constraintlayout = "2.1.4"
+activity = "1.10.1"
+constraintlayout = "2.2.1"
+storage = "2.0.0"
+workRuntimeKtx = "2.11.0"
+flexbox = "3.0.0"
+leakcanaryAndroid = "2.14"
+leakcanaryAndroidCore = "2.14"
+leakcanaryObjectWatcherAndroidAndroidx = "2.14"
+leakcanaryObjectWatcherAndroidSupportFragments = "2.14"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -19,8 +25,15 @@ androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 androidx-activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+storage = { module = "com.anggrayudi:storage", version.ref = "storage" }
+androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "workRuntimeKtx" }
+flexbox = { module = "com.google.android.flexbox:flexbox", version.ref = "flexbox" }
+leakcanary-android = { module = "com.squareup.leakcanary:leakcanary-android", version.ref = "leakcanaryAndroid" }
+leakcanary-android-core = { module = "com.squareup.leakcanary:leakcanary-android-core", version.ref = "leakcanaryAndroidCore" }
+leakcanary-object1-watcher-android-androidx = { module = "com.squareup.leakcanary:leakcanary-object-watcher-android-androidx", version.ref = "leakcanaryObjectWatcherAndroidAndroidx" }
+leakcanary-object1-watcher-android-support-fragments = { module = "com.squareup.leakcanary:leakcanary-object-watcher-android-support-fragments", version.ref = "leakcanaryObjectWatcherAndroidSupportFragments" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
-jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version = "2.0.20" }
+jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version = "2.1.21" }
 

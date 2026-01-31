@@ -41,6 +41,8 @@
 
     <string name="display_ui">Wyświetlaj interfejs:</string>
     <string name="autostart">Autostart:</string>
+    <string name="display_artist">Wyświetlaj artystę:</string>
+    <string name="display_titles">Wyświetlaj tytuły:</string>
 
     <string name="song_str">%1$s</string>   
     <string name="artist_and_song_str">%1$s - %2$s</string>

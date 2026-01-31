@@ -27,7 +27,11 @@ class InputFilterMinMax : InputFilter {
         dend: Int
     ): String? {
         try {
-            val input = (dest.toString() + source.toString()).toInt()
+            val newVal = dest.subSequence(0, dstart).toString() + 
+                         source.subSequence(start, end).toString() + 
+                         dest.subSequence(dend, dest.length).toString()
+            if (newVal.isEmpty()) return null
+            val input = newVal.toInt()
             if (isInRange(min, max, input)) return null
         } catch (nfe: NumberFormatException) {
             nfe.printStackTrace()

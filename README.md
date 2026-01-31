@@ -1,10 +1,10 @@
-# Display Media Titles for FYT 7862/8581
+# Display Media Titles for FYT 7862/8581 + universal music widget
 
-Android app for FYT 7862/8581 displaying media titles on status bar. It displays also artist name if it's present in the metadata. Should work on Android 8 and above. The app was tested on Android 10 on FYT UIS7862 and on Android 14 on phone and should work on most of the devices, however it was created exclusively for FYT 7862/8581 so it might misbehave on other devices.
+Android app for FYT 7862/8581 displaying media titles on status bar. App also offers an universal music widget. It displays also artist name if it's present in the metadata. Should work on Android 8 and above. The app was tested on Android 10 on FYT UIS7862 and on Android 15 on phone. Display Media Titles should work on most of the devices, however it was created exclusively for FYT 7862/8581 so it might misbehave on other devices.
 
 App works with the players that use MediaController which means that it should get along with most of the available music apps. 
 
-It also supports original FYT player but this requires a simple [launcher modification](./launcher_cooker/README_LAUNCHER.md). You can also use modified [launchers](#modified-launchers-allowing-to-display-stock-player-media-data).
+It also supports original FYT player - see the `Displaying media titles from stock FYT's music player` caption.
 
 ## Installation
 
@@ -23,19 +23,20 @@ Check this [tutorial](https://www.youtube.com/watch?v=H3tnNVyCJfk) in case you h
 	Download and install `display_media_titles_phone.apk` file. This version due to android restrictions will display titles only if the launcher has a fully transparent status bar, on FYT it might look like there's a shadow on it (it's probably hardcoded, the shadow persists regardless the launcher type/mod).
 	User will be prompted to grant permissions mentioned before on the first start. 
 	
-* System app (only for devices using standard Google keystore i.e. FYT):
+* System app (exclusively for FYT 7862/8581):
 	
 	- FYT 7862/8581:
 
-		Download `installer.zip`, unpack it in a FAT32 formatted USB pendrive, then connect pendrive to your unit's USB port and wait, installation should start after few seconds.
+		Which installer should you choose? See the `Displaying media titles from stock FYT's music player` caption and choose the variant that suits you.
+		Download `installer_xxx.zip`, unpack it in a FAT32 formatted USB pendrive, then connect pendrive to your unit's USB port and wait, installation should start after few seconds.
 		Works with every launcher and displays media data on top of everything (no shadow issue).
 		Permissions for system apps should be granted automatically.
 		
-		Use `uninstaller.zip` to remove the app.
+		Use `uninstaller_xxx.zip` to remove the app.
 
 	- Other devices using standard Google keystore:
 
-		Install `vasyl.titles.apk` from `installer\_displaymediatitles\vasyl.titles` and [convert it to system app](https://www.google.com/search?client=firefox-b-d&q=how+to+convert+app+to+stsyem).
+		Install any `.apk` from `installer\_displaymediatitles\package.name` and [convert it to system app](https://www.google.com/search?client=firefox-b-d&q=how+to+convert+app+to+stsyem).
 
 * Opening app interface:
 
@@ -57,30 +58,46 @@ Check this [tutorial](https://www.youtube.com/watch?v=H3tnNVyCJfk) in case you h
 		
 		If you pick up the font .ttf on the phone and everything seems to be fine but eventually the font isn't loaded then make sure that you're using the stock file manager (com.google.android.documentsui) and allow the app to `Change system settings`.
 
-* Displaying FYT player media titles:
+* Displaying media titles from stock FYT's music player:
 
-	FYT manufacturers have designed connection between the stock music app (com.syu.music) and the launcher which depends on intents adressed for specific package. That means that there is no way to intercept the existing message. Fortunately I found a workaround by adding a broadcast to the launcher which receives and forwards that message to any app that has registered a specific receiver. And you can find such receiver in my app.
+	FYT manufacturers have designed connection between the stock music app (com.syu.music) and the target apps (current default launcher and few more - probably specific to the music app version) that depends on intents adressed for specific package. That means that there is no way to directly intercept the existing message. Fortunately I found few workarounds. 
 
-	Why not to implement such broadcast directly in the music player instead of modifying the launcher? Well, I'm not an expert in modifying smali files, there is also plenty of versions of this music app, moreover stock player stopped working everytime I had tampered with it, not to mention that every test required a trip to garage. If you figure it out, please let me know!
+	First method is a proxy launcher with an extra broadcast that receives and forwards the intents mentioned above to any app that has registered a specific receiver. And you can find such receiver in Display Media Titles.
+	This method has a major limitation because it needs a modified launcher (you can use existing one or modify it by yourself - see below).
+
+	Second method depends on changing the app's package name to the one that is adressed by the stock music player. This doesn't require any modifications however it might happen that you won't be able to install the app under specific package (listed below) if you already have such package installed on your FYT device. To reduce such probability the app comes in few variants with different package names.
+	
+	List of available packages:
+	- `vasyl.titles` (this is the original name, second method won't work with that)
+	- `com.syu.widget.music`
+	- `com.syu.screensaver`
+	- `com.ava.car`
+	- `cn.teyes.online`
+
+	Always check if the package you have chosen is not already installed! Other way you can mess your unit. 
 
 ## Generating app in Android Studio
 
 Clone repository and use `keystore.jks` located in `Display-Media-Titles\app`. Choose exisiting android key alias with password `android`. 
 For non-system app remove `android:sharedUserId="android.uid.system"` from `AndroidManifest.xml`.
 
-FYT uses standard Google keystore, if you want to generate app that will work as a system app on OS that has been signed with different keystore then make sure to use that keystore.
+FYT 7862/8581 uses standard Google keystore, if you want to generate app that will work as a system app on OS that has been signed with different keystore then make sure to use that keystore.
 
 ## Gallery
 
-[<img src="./images/10.png" width="50%">](./images/10.png)[<img src="./images/3.png" width="50%">](./images/3.png)
+[<img src="./images/10.png" width="50%">](./images/10.png)[<img src="./images/3a.png" width="50%">](./images/3a.png)
 [<img src="./images/4.png" width="50%">](./images/4.png)[<img src="./images/5.png" width="50%">](./images/5.png)
 [<img src="./images/6.png" width="50%">](./images/6.png)[<img src="./images/7.png" width="50%">](./images/7.png)
 [<img src="./images/8.png" width="50%">](./images/8.png)[<img src="./images/9.png" width="50%">](./images/9.png)
-[<img src="./images/12.png" width="50%">](./images/12.png)
+[<img src="./images/12.png" width="50%">](./images/12.png)[<img src="./images/3.png" width="50%">](./images/3.png)
 
 ## Modified Launchers allowing to display stock player media data
 
 **[HERE](./launcher_cooker/README_LAUNCHER.md) is a full guide how to easily modify most of the existing launchers.**
+
+### Universal launcher for any resolution and ortientation
+
+* [launcher66](https://github.com/vasyl91/FYT-Launcher-Mod)
 
 ### 2000x1200
 

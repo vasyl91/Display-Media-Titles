@@ -41,8 +41,14 @@
     <string name="fyt_file">File name</string>
 
     <string name="display_ui">Display UI:</string>
+    <string name="display_ui_summary">Open dialer app and type <b>*#*#3368#*#*</b> to show the UI again</string>
     <string name="autostart">Start on boot:</string>
+    <string name="autostart_app_summary">For FYT devices - use built in system autostart option</string>
     <string name="display_artist">Display artist:</string>
+    <string name="display_titles">Display titles:</string>
+    <string name="exclude_for_widget">Exclude for widget:</string>
+    <string name="exclude_summary">Excluded apps won\'t affect the widget</string>
+    <string name="exclude_button">Exclude apps</string>
 
     <string name="song_str">%1$s</string>   
     <string name="artist_and_song_str">%1$s - %2$s</string>
@@ -60,4 +66,9 @@
     <string name="materialcolorpicker__inputColor">Color: </string>
     <string name="materialcolorpicker__btnSelectColor">Select</string>
     <string name="materialcolorpicker__hash" translatable="false">#</string>
+
+    <string name="widget_description_big">Big music widget</string>
+    <string name="widget_description_small">Small music widget</string>
+    <string name="app_list_dialog">Titles won\'t be displayed for the selected apps</string>
+    <string name="app_filter_class" translatable="false"></string>
 </resources>
