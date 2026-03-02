@@ -65,7 +65,7 @@ Check this [tutorial](https://www.youtube.com/watch?v=H3tnNVyCJfk) in case you h
 	First method is a proxy launcher with an extra broadcast that receives and forwards the intents mentioned above to any app that has registered a specific receiver. And you can find such receiver in Display Media Titles.
 	This method has a major limitation because it needs a modified launcher (you can use existing one or modify it by yourself - see below).
 
-	Second method depends on changing the app's package name to the one that is adressed by the stock music player. This doesn't require any modifications however it might happen that you won't be able to install the app under specific package (listed below) if you already have such package installed on your FYT device. To reduce such probability the app comes in few variants with different package names.
+	Second method depends on changing the Display Media Titles' package name to the one that is adressed by the stock music player. This doesn't require any modifications however it might happen that you won't be able to install the app under specific package (listed below) if you already have such package installed on your FYT device. To reduce such probability the app comes in few variants with different package names.
 	
 	List of available packages:
 	- `vasyl.titles` (this is the original name, second method won't work with that)
