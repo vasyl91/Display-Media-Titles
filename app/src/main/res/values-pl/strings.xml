@@ -27,6 +27,7 @@
     <string name="normal">Normalna</string>
     <string name="italic">Kursywa</string>
     <string name="bold">Pogrubienie</string>
+    <string name="normal_outlined">Obrysowana</string>
     <string name="ttf">TTF</string>
     <string name="ttf_position">Wysokość TTF:</string>
     <string name="ttf_center">Środkuj</string>
