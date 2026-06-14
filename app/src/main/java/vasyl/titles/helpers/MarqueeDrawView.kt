@@ -18,6 +18,12 @@ class MarqueeDrawView @JvmOverloads constructor(
 ) : View(context, attrs) {
 
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val strokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 5f
+        color = Color.BLACK
+    }
+    private var isOutlined = false
     private val bgPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private var tf: Typeface? = null
     private var text: String = ""
@@ -44,6 +50,7 @@ class MarqueeDrawView @JvmOverloads constructor(
         bgPaint.color = Color.TRANSPARENT
         // ensure view itself has no background drawable that interferes
         background = null
+        strokePaint.textSize = paint.textSize
     }
     
     fun setText(value: String?) {
@@ -63,6 +70,7 @@ class MarqueeDrawView @JvmOverloads constructor(
             sizeSp,
             resources.displayMetrics
         )
+        strokePaint.textSize = paint.textSize
         requestLayout()
         invalidate()
         restartMarqueeIfNeeded()
@@ -76,12 +84,15 @@ class MarqueeDrawView @JvmOverloads constructor(
     fun setTypefaceMode(mode: Int) {
         // only apply built-in styles if no custom TTF is loaded
         if (tf != null) return
+        isOutlined = (mode == 4)
         val style = when (mode) {
             1 -> Typeface.BOLD
             2 -> Typeface.ITALIC
             else -> Typeface.NORMAL
         }
-        paint.typeface = Typeface.create(Typeface.DEFAULT, style)
+        val type = Typeface.create(Typeface.DEFAULT, style)
+        paint.typeface = type
+        strokePaint.typeface = type
         invalidate()
     }
 
@@ -94,7 +105,9 @@ class MarqueeDrawView @JvmOverloads constructor(
         } catch (e: Exception) {
             null
         }
-        paint.typeface = tf ?: Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
+        val type = tf ?: Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
+        paint.typeface = type
+        strokePaint.typeface = type
         requestLayout()
         invalidate()
         restartMarqueeIfNeeded()
@@ -163,11 +176,13 @@ class MarqueeDrawView @JvmOverloads constructor(
 
         if (textWidth <= (width - paddingLeft - paddingRight) || !scrollEnabled) {
             // not scrolling, draw at start
+            if (isOutlined) canvas.drawText(text, paddingLeft.toFloat(), centerY, strokePaint)
             canvas.drawText(text, paddingLeft.toFloat(), centerY, paint)
         } else {
             // scrolling - draw text repeatedly for continuous marquee
             var x = startX
             while (x < width.toFloat()) {
+                if (isOutlined) canvas.drawText(text, x, centerY, strokePaint)
                 canvas.drawText(text, x, centerY, paint)
                 x += textWidth + spacing
             }

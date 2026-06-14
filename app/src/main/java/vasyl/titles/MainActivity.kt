@@ -77,6 +77,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var mNormalButton: Button
     private lateinit var mItalicButton: Button
     private lateinit var mBoldButton: Button
+    private lateinit var mNormalOutlinedButton: Button
     private lateinit var mTtfButton: Button
     private lateinit var mTtfUpButton: Button
     private lateinit var mTtfCenterButton: Button
@@ -249,25 +250,24 @@ class MainActivity : AppCompatActivity() {
         mNormalButton = findViewById(R.id.normal_button)        
         mItalicButton = findViewById(R.id.italic_button)
         mBoldButton = findViewById(R.id.bold_button)
+        mNormalOutlinedButton = findViewById(R.id.normal_outlined_button)
         mTtfButton = findViewById(R.id.ttf_button)
         when (typeface) {
             0 -> {
-                typefaceButtons(Color.GREEN,
-                    buttonColor.toColorInt(),
-                    buttonColor.toColorInt(), buttonColor.toColorInt())
-            }
-            2 -> {
-                typefaceButtons(buttonColor.toColorInt(), Color.GREEN,
-                    buttonColor.toColorInt(), buttonColor.toColorInt())
+                typefaceButtons(Color.GREEN, buttonColor.toColorInt(), buttonColor.toColorInt(), buttonColor.toColorInt(), buttonColor.toColorInt())
             }
             1 -> {
-                typefaceButtons(buttonColor.toColorInt(),
-                    buttonColor.toColorInt(), Color.GREEN, buttonColor.toColorInt())
+                typefaceButtons(buttonColor.toColorInt(), buttonColor.toColorInt(), Color.GREEN, buttonColor.toColorInt(), buttonColor.toColorInt())
+            }
+            2 -> {
+                typefaceButtons(buttonColor.toColorInt(), Color.GREEN, buttonColor.toColorInt(), buttonColor.toColorInt(), buttonColor.toColorInt())
             }
             3 -> {
-                typefaceButtons(buttonColor.toColorInt(),
-                    buttonColor.toColorInt(), buttonColor.toColorInt(), Color.GREEN)
-            }           
+                typefaceButtons(buttonColor.toColorInt(), buttonColor.toColorInt(), buttonColor.toColorInt(), buttonColor.toColorInt(), Color.GREEN)
+            }
+            4 -> {
+                typefaceButtons(buttonColor.toColorInt(), buttonColor.toColorInt(), buttonColor.toColorInt(), Color.GREEN, buttonColor.toColorInt())
+            }
         }
 
         storageHelper.onFileSelected = { requestCode, files ->            
@@ -275,7 +275,10 @@ class MainActivity : AppCompatActivity() {
             typefaceLinearLayout.visibility = View.VISIBLE 
             saveInt("typeface", 3)
             typefaceButtons(buttonColor.toColorInt(),
-                buttonColor.toColorInt(), buttonColor.toColorInt(), Color.GREEN)
+                buttonColor.toColorInt(),
+                buttonColor.toColorInt(),
+                buttonColor.toColorInt(),
+                Color.GREEN)
             settings.edit {
                 putString("typeface_ttf", (files[0].getAbsolutePath(applicationContext)).toString())
             }
@@ -720,25 +723,46 @@ class MainActivity : AppCompatActivity() {
     fun normalButton(v: View?) {
         saveInt("typeface", 0)
         typefaceButtons(Color.GREEN,
-            buttonColor.toColorInt(), buttonColor.toColorInt(), buttonColor.toColorInt())
+            buttonColor.toColorInt(),
+            buttonColor.toColorInt(),
+            buttonColor.toColorInt(),
+            buttonColor.toColorInt())
         typefaceTextView.visibility = View.GONE
         typefaceLinearLayout.visibility = View.GONE  
     }
 
     fun italicButton(v: View?) {
         saveInt("typeface", 2)
-        typefaceButtons(buttonColor.toColorInt(), Color.GREEN,
-            buttonColor.toColorInt(), buttonColor.toColorInt())
+        typefaceButtons(buttonColor.toColorInt(),
+            Color.GREEN,
+            buttonColor.toColorInt(),
+            buttonColor.toColorInt(),
+            buttonColor.toColorInt())
         typefaceTextView.visibility = View.GONE
         typefaceLinearLayout.visibility = View.GONE  
     }
 
     fun boldButton(v: View?) {
         saveInt("typeface", 1)
-        typefaceButtons(buttonColor.toColorInt(),
-            buttonColor.toColorInt(), Color.GREEN, buttonColor.toColorInt())
+        typefaceButtons(
+            buttonColor.toColorInt(),
+            buttonColor.toColorInt(),
+            Color.GREEN,
+            buttonColor.toColorInt(),
+            buttonColor.toColorInt())
         typefaceTextView.visibility = View.GONE
         typefaceLinearLayout.visibility = View.GONE  
+    }
+
+    fun normalOutlinedButton(v: View?) {
+        saveInt("typeface", 4)
+        typefaceButtons(buttonColor.toColorInt(),
+            buttonColor.toColorInt(),
+            buttonColor.toColorInt(),
+            Color.GREEN,
+             buttonColor.toColorInt())
+        typefaceTextView.visibility = View.GONE
+        typefaceLinearLayout.visibility = View.GONE
     }
 
     fun ttfButton(v: View?) {
@@ -749,10 +773,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun typefaceButtons(normal: Int, italic: Int, bold: Int, ttf: Int) {
+    private fun typefaceButtons(normal: Int, italic: Int, bold: Int, outlined: Int, ttf: Int) {
         mNormalButton.setBackgroundColor(normal)
         mItalicButton.setBackgroundColor(italic)
         mBoldButton.setBackgroundColor(bold)
+        mNormalOutlinedButton.setBackgroundColor(outlined)
         mTtfButton.setBackgroundColor(ttf)
     }
 
