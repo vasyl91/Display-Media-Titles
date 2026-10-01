@@ -1,30 +1,44 @@
 package vasyl.titles.excludeapps
 
-import android.content.Context.MODE_PRIVATE
+import android.annotation.SuppressLint
+import android.app.Dialog
+import android.content.Context
 import android.content.SharedPreferences
 import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.Window
 import android.widget.AdapterView
 import android.widget.BaseAdapter
 import android.widget.GridView
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.content.edit
 import androidx.fragment.app.DialogFragment
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import vasyl.titles.DisplayMediaTitles
+import vasyl.titles.NotificationListener
 import vasyl.titles.R
 
 class ExcludeAppsDialog : DialogFragment(), AdapterView.OnItemClickListener {
-    
+
+    private companion object {
+        const val PREFS = "ExcludeAppsPrefs"
+        const val KEY_EXCLUDED = "exclude_apps"
+
+        /** #FC6B03 at alpha 90 (previously a ColorDrawable whose alpha was changed afterwards). */
+        val SELECTED_COLOR = Color.argb(90, 0xFC, 0x6B, 0x03)
+    }
+
     private var currentAppIcon: ImageView? = null
     private var currentAppName: TextView? = null
     private var mAdapter: AppSelectAdapter? = null
-    private var mData: ArrayList<AppInfo>? = null
     private var mGridView: GridView? = null
     private var mItemClickDataListener: ItemClickDataListener? = null
-    private var apps: MutableSet<String> = HashSet()
+    private val apps: MutableSet<String> = HashSet()
     private var statsPrefs: SharedPreferences? = null
 
     interface ItemClickDataListener {
@@ -33,54 +47,63 @@ class ExcludeAppsDialog : DialogFragment(), AdapterView.OnItemClickListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setStyle(DialogFragment.STYLE_NORMAL, R.style.ExcludeAppsDialog)
+        setStyle(STYLE_NORMAL, R.style.ExcludeAppsDialog)
     }
+
+    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog =
+        super.onCreateDialog(savedInstanceState).apply {
+            // Must happen before any content is set (was window.requestFeature(1) in onCreateView).
+            requestWindowFeature(Window.FEATURE_NO_TITLE)
+        }
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        statsPrefs = requireActivity().getSharedPreferences("ExcludeAppsPrefs", MODE_PRIVATE)
-        
-        // Load apps into a proper mutable HashSet
-        val temp = statsPrefs?.getStringSet("exclude_apps", HashSet()) ?: HashSet()
-        apps = HashSet()
-        apps.addAll(temp)
-        
-        val view = inflater.inflate(R.layout.dialog_applist, container)
-        mData = AllAppsList.data as ArrayList<AppInfo>?
+    ): View {
+        val prefs = requireContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        statsPrefs = prefs
+        // Copy: the set returned by SharedPreferences must never be modified.
+        apps.clear()
+        prefs.getStringSet(KEY_EXCLUDED, null)?.let { apps.addAll(it) }
+
+        val view = inflater.inflate(R.layout.dialog_applist, container, false)
         currentAppIcon = view.findViewById(R.id.current_app_icon)
         currentAppName = view.findViewById(R.id.current_app_name)
-        mGridView = view.findViewById(R.id.gridview)
-        mAdapter = AppSelectAdapter(mData!!)
-        mGridView?.adapter = mAdapter
-        mGridView?.onItemClickListener = this
-        
+        val adapter = AppSelectAdapter()
+        mAdapter = adapter
+        mGridView = view.findViewById<GridView>(R.id.gridview)?.also { grid ->
+            grid.adapter = adapter
+            grid.onItemClickListener = this
+        }
+
         view.setOnClickListener {
             dismiss()
         }
-        
-        dialog?.window?.requestFeature(1)
         return view
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        dialog?.window?.apply {
-            setLayout(-1, -1)
-        }
+        dialog?.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
         dialog?.setCanceledOnTouchOutside(true)
+
+        // Launcher apps are loaded in the background at startup: show them as soon as they arrive.
+        viewLifecycleOwner.lifecycleScope.launch {
+            AllAppsList.apps.collect { list -> mAdapter?.submit(list) }
+        }
+        if (AllAppsList.apps.value.isEmpty()) DisplayMediaTitles.getInstance().setAllAppsAsync()
     }
 
     override fun onItemClick(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-        val allApp = mData?.get(position) ?: return
-        
+        val app = mAdapter?.getItem(position) as? AppInfo ?: return
+
         // Toggle selection
-        toggleSelection(allApp.getPackageName())
-        
+        toggleSelection(app.getPackageName())
+
         // Notify adapter to refresh
         mAdapter?.notifyDataSetChanged()
+        mItemClickDataListener?.onClickData(app)
     }
 
     override fun onDestroyView() {
@@ -90,30 +113,18 @@ class ExcludeAppsDialog : DialogFragment(), AdapterView.OnItemClickListener {
         currentAppIcon = null
         currentAppName = null
         mGridView = null
-        mItemClickDataListener = null  
-        mData = null  
+        mItemClickDataListener = null
     }
 
     private fun toggleSelection(packageName: String) {
-        if (apps.contains(packageName)) {
-            apps.remove(packageName)
-        } else {
-            apps.add(packageName)
-        }
-        
-        // Create a completely new HashSet for saving
-        val toSave = HashSet(apps)
-        
-        // Clear and save
-        statsPrefs?.edit()?.apply {
-            remove("exclude_apps")
-            apply()
-        }
-        
-        statsPrefs?.edit()?.apply {
-            putStringSet("exclude_apps", toSave)
-            apply()
-        }
+        if (packageName.isEmpty()) return
+        if (!apps.add(packageName)) apps.remove(packageName)
+
+        // One write with a new set instance (it was removed and written again in two edits).
+        statsPrefs?.edit { putStringSet(KEY_EXCLUDED, HashSet(apps)) }
+
+        // Apply the exclusion to the overlay right away.
+        NotificationListener.refreshNow()
     }
 
     fun isShowing(): Boolean {
@@ -124,49 +135,50 @@ class ExcludeAppsDialog : DialogFragment(), AdapterView.OnItemClickListener {
         mItemClickDataListener = listener
     }
 
-    inner class AppSelectAdapter(private val mData: ArrayList<AppInfo>) : BaseAdapter() {
+    private inner class AppSelectAdapter : BaseAdapter() {
 
-        override fun getCount(): Int = mData.size
+        private var items: List<AppInfo> = emptyList()
 
-        override fun getItem(position: Int): Any = mData[position]
+        fun submit(newItems: List<AppInfo>) {
+            items = newItems
+            notifyDataSetChanged()
+        }
+
+        override fun getCount(): Int = items.size
+
+        override fun getItem(position: Int): Any = items[position]
 
         override fun getItemId(position: Int): Long = position.toLong()
 
+        @SuppressLint("InflateParams")
         override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
             val view: View
             val viewHolder: ViewHolder
-            
+
             if (convertView == null) {
+                // Same inflation as before (application theme, no parent), so the items look the same.
                 view = LayoutInflater.from(DisplayMediaTitles.getContext())
                     .inflate(R.layout.item_app_select, null)
-                viewHolder = ViewHolder().apply {
-                    appIcon = view.findViewById(R.id.app_icon)
-                    appName = view.findViewById(R.id.app_name)
-                }
+                viewHolder = ViewHolder(
+                    view.findViewById(R.id.app_icon),
+                    view.findViewById(R.id.app_name)
+                )
                 view.tag = viewHolder
             } else {
                 view = convertView
                 viewHolder = view.tag as ViewHolder
             }
-            
-            val data = mData[position]
+
+            val data = items[position]
             viewHolder.appIcon?.setImageBitmap(data.iconBitmap)
             viewHolder.appName?.text = data.title
-            
+
             // Set background color based on selection state
-            if (apps.contains(data.getPackageName())) {
-                view.setBackgroundColor(Color.parseColor("#FC6B03"))
-                view.background.alpha = 90
-            } else {
-                view.setBackgroundColor(Color.TRANSPARENT)
-            }
-            
+            view.setBackgroundColor(if (apps.contains(data.getPackageName())) SELECTED_COLOR else Color.TRANSPARENT)
+
             return view
         }
     }
 
-    inner class ViewHolder {
-        var appIcon: ImageView? = null
-        var appName: TextView? = null
-    }
+    private class ViewHolder(val appIcon: ImageView?, val appName: TextView?)
 }

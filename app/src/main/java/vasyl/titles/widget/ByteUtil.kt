@@ -2,44 +2,35 @@ package vasyl.titles.widget
 
 object ByteUtil {
 
+    /** Index of the first occurrence of [tag] within the first [len] bytes of [src], or -1. */
     fun indexOf(tag: ByteArray, src: ByteArray, len: Int): Int {
         val tagLen = tag.size
-        if (len <= src.size) {
-            for (j in 0..(len - tagLen)) {
-                var i = 0
-                while (i < tagLen && src[j + i] == tag[i]) {
-                    if (i == tagLen - 1) {
-                        return j
-                    }
-                    i++
-                }
+        if (tagLen == 0 || len > src.size || len < tagLen) return -1
+        outer@ for (j in 0..(len - tagLen)) {
+            for (i in 0 until tagLen) {
+                if (src[j + i] != tag[i]) continue@outer
             }
+            return j
         }
         return -1
     }
 
+    /** Index of the last occurrence of [tag] within the first [len] bytes of [src], or -1. */
     fun lastIndexOf(tag: ByteArray, src: ByteArray, len: Int): Int {
         val tagLen = tag.size
-        if (len <= src.size) {
-            for (j in (len - tagLen) downTo 0) {
-                var i = 0
-                while (i < tagLen && src[j + i] == tag[i]) {
-                    if (i == tagLen - 1) {
-                        return j
-                    }
-                    i++
-                }
+        if (tagLen == 0 || len > src.size || len < tagLen) return -1
+        outer@ for (j in (len - tagLen) downTo 0) {
+            for (i in 0 until tagLen) {
+                if (src[j + i] != tag[i]) continue@outer
             }
+            return j
         }
         return -1
     }
 
+    /** Copy of src[start, end), or null for an invalid range. */
     fun cutBytes(start: Int, end: Int, src: ByteArray): ByteArray? {
         if (start < 0 || end > src.size || start >= end) return null
-
-        val len = end - start
-        val tmp = ByteArray(len)
-        System.arraycopy(src, start, tmp, 0, len)
-        return tmp
+        return src.copyOfRange(start, end)
     }
 }

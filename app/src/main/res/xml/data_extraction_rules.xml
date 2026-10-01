@@ -1,19 +1,20 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-   Sample data extraction rules file; uncomment and customize as necessary.
-   See https://developer.android.com/about/versions/12/backup-restore#xml-changes
-   for details.
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Backup and device-to-device transfer rules for Android 12+ (API 31+, android:dataExtractionRules).
+    Only user settings are kept: the settings, the excluded apps and the imported fonts (the font
+    path preference points into files/fonts). Widget state (DataStore) and album cover files are
+    transient and rebuilt on the next track, so they are left out.
+    Apps running with the system UID (FYT flavors) are never backed up by Android.
 -->
 <data-extraction-rules>
     <cloud-backup>
-        <!-- TODO: Use <include> and <exclude> to control what is backed up.
-        <include .../>
-        <exclude .../>
-        -->
+        <include domain="sharedpref" path="savedPrefs.xml" />
+        <include domain="sharedpref" path="ExcludeAppsPrefs.xml" />
+        <include domain="file" path="fonts/" />
     </cloud-backup>
-    <!--
     <device-transfer>
-        <include .../>
-        <exclude .../>
+        <include domain="sharedpref" path="savedPrefs.xml" />
+        <include domain="sharedpref" path="ExcludeAppsPrefs.xml" />
+        <include domain="file" path="fonts/" />
     </device-transfer>
-    -->
 </data-extraction-rules>

@@ -1,7 +1,7 @@
 pluginManagement {
     repositories {
         google {
-            mavenContent {
+            content {
                 includeGroupAndSubgroups("androidx")
                 includeGroupAndSubgroups("com.android")
                 includeGroupAndSubgroups("com.google")
@@ -11,15 +11,30 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
+
 plugins {
-    id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0"
+    // Lets Gradle auto-provision a JDK if a toolchain is ever requested (kotlin { jvmToolchain(..) }).
+    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
+
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
-        google()
+        google {
+            content {
+                includeGroupAndSubgroups("androidx")
+                includeGroupAndSubgroups("com.android")
+                includeGroupAndSubgroups("com.google")
+            }
+        }
         mavenCentral()
-        maven { url = uri("https://www.jitpack.io") }
+        // JitPack is slow and flaky; restrict it to com.github.* artifacts so Gradle never asks it for
+        // anything else. Remove the whole entry if no JitPack dependency is used.
+        maven("https://jitpack.io") {
+            content {
+                includeGroupAndSubgroups("com.github")
+            }
+        }
     }
 }
 

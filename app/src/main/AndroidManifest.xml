@@ -1,79 +1,124 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    System flavors run with the system UID. The "phone" flavor removes android:sharedUserId and the
+    system-only permissions in src/phone/AndroidManifest.xml.
+-->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:sharedUserId="android.uid.system"
-    tools:ignore="Deprecated" >
+    tools:ignore="Deprecated">
 
-    <uses-permission android:name="android.permission.ACTION_MANAGE_OVERLAY_PERMISSION" /> 
-    <uses-permission android:name="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
-        tools:ignore="ProtectedPermissions" />
+    <!-- Removed: "android.permission.ACTION_MANAGE_OVERLAY_PERMISSION" (not a permission, it is a
+         Settings action) and BIND_NOTIFICATION_LISTENER_SERVICE (held by the system, never requested
+         by apps). -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS" />
-    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.MEDIA_CONTENT_CONTROL" />
+    <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS"
+        tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage" />
+    <uses-permission android:name="android.permission.MEDIA_CONTENT_CONTROL"
+        tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.MODIFY_PHONE_STATE"
         tools:ignore="ProtectedPermissions" />
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.READ_CALL_LOG" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <!-- Runtime storage permissions only exist up to Android 12L / 10; newer versions use
+         MANAGE_EXTERNAL_STORAGE (all files access). -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" /> 
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="29"
+        tools:ignore="ScopedStorage" />
     <uses-permission android:name="android.permission.WRITE_SETTINGS"
         tools:ignore="ProtectedPermissions" />
-    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />              
-    <uses-feature android:name="android.hardware.telephony" 
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" />
+
+    <uses-feature
+        android:name="android.hardware.telephony"
         android:required="false" />
 
+    <!-- Package visibility (Android 11+). QUERY_ALL_PACKAGES covers it as well, these entries keep
+         the launcher app list and the FYT player working if that permission is ever dropped. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+        <package android:name="com.syu.music" />
+    </queries>
+
+    <!-- usesCleartextTraffic removed: the app has no INTERNET permission. -->
     <application
         android:name="vasyl.titles.DisplayMediaTitles"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
+        android:enableOnBackInvokedCallback="true"
         android:fullBackupContent="@xml/backup_rules"
+        android:hardwareAccelerated="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:requestLegacyExternalStorage="true"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.DisplayMediaTitles"
-        android:hardwareAccelerated="true"
-        android:usesCleartextTraffic="true"
-        android:enableOnBackInvokedCallback="true"
-        android:requestLegacyExternalStorage="true" >
+        tools:targetApi="36">
+
+        <!-- Invisible entry point (launcher icon, boot, FYT autostart): wakes the app and opens the
+             settings screen only when "Display UI" is checked or a permission is missing. -->
         <activity
-            android:name="vasyl.titles.MainActivity"
+            android:name="vasyl.titles.WakeActivity"
             android:excludeFromRecents="true"
             android:exported="true"
-            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
-            android:windowSoftInputMode="stateHidden"
-            android:screenOrientation="fullSensor" >
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.NoDisplay">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <service 
-            android:name=".NotificationListener"
-            android:label="NotiListener"
+
+        <!-- Settings screen. Opened by WakeActivity and SecretCode; stays exported so that shortcuts
+             or automations that start it directly keep working. -->
+        <activity
+            android:name="vasyl.titles.MainActivity"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden"
+            android:excludeFromRecents="true"
             android:exported="true"
-            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE" >
+            android:screenOrientation="fullSensor"
+            android:windowSoftInputMode="stateHidden" />
+
+        <service
+            android:name="vasyl.titles.NotificationListener"
+            android:exported="true"
+            android:label="NotiListener"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
             <intent-filter>
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
         </service>
+
+        <!-- Started by the FYT music app (com.syu.music) with the "launcher music" action. It has to
+             stay exported; the data it receives is validated before use. -->
         <service
             android:name="vasyl.titles.MusicService"
-            android:exported="true">
+            android:exported="true"
+            tools:ignore="ExportedService">
             <intent-filter>
                 <action android:name="com.fyt.launcher.music" />
             </intent-filter>
         </service>
+
         <receiver
             android:name="vasyl.titles.widget.MusicWidgetBigReceiver"
-            android:label="@string/widget_description_big"
-            android:exported="true">
+            android:exported="true"
+            android:label="@string/widget_description_big">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
@@ -81,10 +126,11 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/music_widget_big" />
         </receiver>
+
         <receiver
-            android:name=".widget.MusicWidgetSmallReceiver"
-            android:label="@string/widget_description_small"
-            android:exported="true">
+            android:name="vasyl.titles.widget.MusicWidgetSmallReceiver"
+            android:exported="true"
+            android:label="@string/widget_description_small">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
@@ -92,29 +138,51 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/music_widget_small" />
         </receiver>
-        <receiver android:name=".PhoneStateBroadcastReceiver"
-            android:label="CallListener"
+
+        <receiver
+            android:name="vasyl.titles.receivers.PhoneStateBroadcastReceiver"
             android:enabled="true"
-            android:exported="true">
+            android:exported="true"
+            android:label="CallListener">
             <intent-filter>
-                    <action android:name="android.intent.action.PHONE_STATE"/>
+                <action android:name="android.intent.action.PHONE_STATE" />
             </intent-filter>
         </receiver>
-        <receiver 
-            android:name=".SecretCode"
-            android:label="CodeListener"
+
+        <receiver
+            android:name="vasyl.titles.receivers.SecretCode"
             android:enabled="true"
-            android:exported="true">
+            android:exported="true"
+            android:label="CodeListener">
             <intent-filter>
-                    <action android:name="android.provider.Telephony.SECRET_CODE"  />
-                    <data android:scheme="android_secret_code" android:host="3368" /> 
+                <!-- Official action since Android 10 (API 29) plus the legacy one used by older dialers. -->
+                <action android:name="android.telephony.action.SECRET_CODE" />
+                <action android:name="android.provider.Telephony.SECRET_CODE" />
+                <data
+                    android:host="3368"
+                    android:scheme="android_secret_code" />
             </intent-filter>
         </receiver>
-        <receiver android:name=".Autostart"
-            android:exported="true" >
+
+        <!-- Starts the app from other apps, e.g. a launcher:
+             sendBroadcast(Intent("vasyl.titles.action.WAKE").setPackage(<package>)
+                 .addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES))
+             "Display UI" checked: opens the settings screen. Unchecked: wakes the app in the
+             background without any activity, so nothing comes to the front. -->
+        <receiver
+            android:name="vasyl.titles.receivers.WakeReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="vasyl.titles.action.WAKE" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name="vasyl.titles.receivers.Autostart"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
-            </intent-filter>  
+            </intent-filter>
         </receiver>
     </application>
 

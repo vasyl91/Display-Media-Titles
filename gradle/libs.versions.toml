@@ -1,39 +1,65 @@
 [versions]
-agp = "8.10.1"
-coreKtx = "1.16.0"
-junit = "4.13.2"
-junitVersion = "1.2.1"
-espressoCore = "3.6.1"
-appcompat = "1.7.1"
-material = "1.12.0"
-activity = "1.10.1"
-constraintlayout = "2.2.1"
-storage = "2.0.0"
-workRuntimeKtx = "2.11.0"
+# Build tooling
+agp = "9.4.0"
+kotlin = "2.4.20"
+dependencyAnalysis = "3.19.2"
+
+# AndroidX
+activity = "1.13.0"
+appcompat = "1.8.0"
+constraintlayout = "2.2.2"
+core = "1.19.1"
+datastore = "1.2.1"
+glance = "1.2.0"
+lifecycle = "2.11.0"
+palette = "1.0.0"
+window = "1.5.1"
+work = "2.12.0"
+
+# Other libraries
+coroutines = "1.11.0"
 flexbox = "3.0.0"
-leakcanaryAndroid = "2.14"
-leakcanaryAndroidCore = "2.14"
-leakcanaryObjectWatcherAndroidAndroidx = "2.14"
-leakcanaryObjectWatcherAndroidSupportFragments = "2.14"
+leakcanary = "2.14"
+material = "1.14.0"
+
+# Tests
+junit = "4.13.2"
+androidxJunit = "1.3.0"
+espressoCore = "3.7.0"
 
 [libraries]
-androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
-junit = { group = "junit", name = "junit", version.ref = "junit" }
-androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
-androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
-androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
-material = { group = "com.google.android.material", name = "material", version.ref = "material" }
-androidx-activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
-androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
-storage = { module = "com.anggrayudi:storage", version.ref = "storage" }
-androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "workRuntimeKtx" }
+# Gradle plugin placed on the root buildscript classpath (see root build.gradle.kts)
+kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+
+# AndroidX
+androidx-activity = { module = "androidx.activity:activity", version.ref = "activity" }
+androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
+androidx-constraintlayout = { module = "androidx.constraintlayout:constraintlayout", version.ref = "constraintlayout" }
+# Since core 1.19 the -ktx extensions live in "core"; core-ktx is an empty compatibility artifact.
+androidx-core = { module = "androidx.core:core", version.ref = "core" }
+androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastore" }
+androidx-glance = { module = "androidx.glance:glance", version.ref = "glance" }
+androidx-glance-appwidget = { module = "androidx.glance:glance-appwidget", version.ref = "glance" }
+# lifecycleScope lives in lifecycle-runtime (lifecycle-runtime-ktx is empty since 2.8).
+androidx-lifecycle-runtime = { module = "androidx.lifecycle:lifecycle-runtime", version.ref = "lifecycle" }
+androidx-palette = { module = "androidx.palette:palette", version.ref = "palette" }
+androidx-window = { module = "androidx.window:window", version.ref = "window" }
+# work-runtime-ktx is an empty artifact since WorkManager 2.9.
+androidx-work-runtime = { module = "androidx.work:work-runtime", version.ref = "work" }
+
+# Other
+kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
 flexbox = { module = "com.google.android.flexbox:flexbox", version.ref = "flexbox" }
-leakcanary-android = { module = "com.squareup.leakcanary:leakcanary-android", version.ref = "leakcanaryAndroid" }
-leakcanary-android-core = { module = "com.squareup.leakcanary:leakcanary-android-core", version.ref = "leakcanaryAndroidCore" }
-leakcanary-object1-watcher-android-androidx = { module = "com.squareup.leakcanary:leakcanary-object-watcher-android-androidx", version.ref = "leakcanaryObjectWatcherAndroidAndroidx" }
-leakcanary-object1-watcher-android-support-fragments = { module = "com.squareup.leakcanary:leakcanary-object-watcher-android-support-fragments", version.ref = "leakcanaryObjectWatcherAndroidSupportFragments" }
+material = { module = "com.google.android.material:material", version.ref = "material" }
+# leakcanary-android already brings leakcanary-android-core and the AndroidX object watcher.
+leakcanary-android = { module = "com.squareup.leakcanary:leakcanary-android", version.ref = "leakcanary" }
+
+# Tests
+junit = { module = "junit:junit", version.ref = "junit" }
+androidx-junit = { module = "androidx.test.ext:junit", version.ref = "androidxJunit" }
+androidx-espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "espressoCore" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
-jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version = "2.1.21" }
-
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+dependency-analysis = { id = "com.autonomousapps.dependency-analysis", version.ref = "dependencyAnalysis" }

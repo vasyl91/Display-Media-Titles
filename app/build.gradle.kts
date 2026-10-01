@@ -1,31 +1,67 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
-
 plugins {
-    id("com.android.application")
-    kotlin("android")
-    id("kotlin-parcelize")
-    id("org.jetbrains.kotlin.plugin.compose") version "2.1.21"
-    id("com.google.devtools.ksp")
-    id("com.autonomousapps.dependency-analysis")
+    alias(libs.plugins.android.application)
+    // AGP 9 compiles Kotlin natively; org.jetbrains.kotlin.android must not be applied anymore.
+    alias(libs.plugins.kotlin.compose)
+    // Removed as unused: kotlin-parcelize (no @Parcelize class) and KSP (it only ran the Room
+    // compiler, and the project has no @Database / @Dao / @Entity).
+    alias(libs.plugins.dependency.analysis)
 }
+
+// Optional dedicated key for the "phone" flavor, see gradle.properties.
+val phoneStoreFile: String? = providers.gradleProperty("phoneStoreFile").orNull
 
 android {
     namespace = "vasyl.titles"
-    compileSdk = 36
+    compileSdk {
+        version = release(37)
+    }
+
+    // Must be declared before it is referenced by defaultConfig / productFlavors.
+    signingConfigs {
+        // Platform key: the system flavors run with android:sharedUserId="android.uid.system", so they
+        // must be signed with the same key as the firmware.
+        getByName("debug") {
+            storeFile = file("keystore.jks")
+            storePassword = "android"
+            keyAlias = "android"
+            keyPassword = "android"
+        }
+        create("platform") {
+            storeFile = file("keystore.jks")
+            storePassword = "android"
+            keyAlias = "android"
+            keyPassword = "android"
+        }
+        if (phoneStoreFile != null) {
+            create("phone") {
+                storeFile = file(phoneStoreFile)
+                storePassword = providers.gradleProperty("phoneStorePassword").orNull
+                keyAlias = providers.gradleProperty("phoneKeyAlias").orNull
+                keyPassword = providers.gradleProperty("phoneKeyPassword").orNull
+            }
+        }
+    }
 
     defaultConfig {
         applicationId = "vasyl.titles"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.1.1"
+        
+        val appVersionName = "1.1.2"
+        versionName = appVersionName
+        // 1.1.2 -> 10102; every release gets a higher versionCode automatically.
+        // A higher versionCode in /oem/priv-app makes the system drop an older /data/app update.
+        versionCode = appVersionName.split(".").map(String::toInt)
+            .let { (major, minor, patch) -> major * 10_000 + minor * 100 + patch }
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        testInstrumentationRunnerArguments["runnerBuilder"] = "de.mannodermaus.junit5.AndroidJUnit5Builder"
-        vectorDrawables {
-            useSupportLibrary = true
-        }
+
+        // Release builds were previously unsigned. The flavor decides which key is used; debug builds
+        // always use the "debug" config above (which is the platform key as well).
+        signingConfig = signingConfigs.getByName("platform")
+
+        // true = flavor is meant to be installed as a system app (android.uid.system).
+        buildConfigField("boolean", "SYSTEM_BUILD", "true")
     }
 
     flavorDimensions += "default"
@@ -34,6 +70,8 @@ android {
         create("vasylTitles") {
             dimension = "default"
             applicationId = "vasyl.titles"
+            // Together with the debug build type: vasylTitlesDebug is selected after a Gradle sync.
+            isDefault = true
         }
         create("syuWidgetMusic") {
             dimension = "default"
@@ -51,9 +89,21 @@ android {
             dimension = "default"
             applicationId = "cn.teyes.online"
         }
+        // Regular (non-system) app for phones and tablets. src/phone/AndroidManifest.xml removes
+        // android:sharedUserId and the permissions that only the system UID can hold.
+        create("phone") {
+            dimension = "default"
+            applicationId = "vasyl.titles.phone"
+            versionNameSuffix = "-phone"
+            buildConfigField("boolean", "SYSTEM_BUILD", "false")
+            signingConfig = signingConfigs.findByName("phone") ?: signingConfigs.getByName("platform")
+        }
     }
 
     buildTypes {
+        debug {
+            isDefault = true
+        }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
@@ -61,29 +111,8 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            // No signingConfig here on purpose: a build type config would override the flavor one.
         }
-    }
-
-    signingConfigs {
-        getByName("debug") {
-            keyAlias = "android"
-            keyPassword = "android"
-            storeFile = file("../app/keystore.jks")
-            storePassword = "android"
-        }
-        create("release") {
-            keyAlias = "android"
-            keyPassword = "android"
-            storeFile = file("../app/keystore.jks")
-            storePassword = "android"
-        }
-    }
-
-    kotlinOptions {
-        freeCompilerArgs += listOf(
-            "-P",
-            "plugin:androidx.compose.compiler.plugins.kotlin:suppressKotlinVersionCompatibilityCheck=true"
-        )
     }
 
     compileOptions {
@@ -91,26 +120,24 @@ android {
         targetCompatibility = JavaVersion.VERSION_21
     }
 
-    tasks.withType<KotlinJvmCompile>().configureEach {
-      compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_21)
-      }
-    }
-
-    tasks.withType<Test> {
-        useJUnit()
-        useJUnitPlatform()
-    }
-
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     packaging {
         dex {
+            // Store dex uncompressed and page aligned (better for apps installed in /system).
             useLegacyPackaging = false
         }
-        resources.excludes.add("META-INF/**")
+        resources {
+            // Do NOT exclude META-INF/** - META-INF/services is needed at runtime (e.g. by coroutines).
+            excludes += setOf(
+                "/META-INF/{AL2.0,LGPL2.1}",
+                "/META-INF/versions/9/OSGI-INF/MANIFEST.MF",
+                "DebugProbesKt.bin",
+            )
+        }
     }
 
     bundle {
@@ -120,36 +147,45 @@ android {
     }
 
     lint {
-        //lintConfig = file("lint.xml")
         checkReleaseBuilds = false
+    }
+
+    testOptions {
+        // Unit tests run against a stub android.jar; the parser logs through android.util.Log.
+        unitTests.isReturnDefaultValues = true
     }
 }
 
-dependencies {
+// With built-in Kotlin the JVM target follows compileOptions.targetCompatibility (21), so no
+// kotlin { compilerOptions { jvmTarget } } block is needed. The old
+// suppressKotlinVersionCompatibilityCheck flag is obsolete with the Compose compiler Gradle plugin.
 
-    implementation(libs.androidx.core.ktx)
+dependencies {
+    implementation(libs.androidx.core)
     implementation(libs.androidx.appcompat)
-    implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
+    implementation(libs.androidx.lifecycle.runtime)
+    implementation(libs.material)
+    // Used by the color picker layout (no code reference, so do not let an IDE "remove unused" it).
     implementation(libs.flexbox)
-    implementation(libs.storage)
-    implementation("androidx.glance:glance:1.1.1")
-    implementation("androidx.glance:glance-appwidget:1.1.1")
-    implementation("androidx.glance:glance-material3:1.1.1")
-    implementation("androidx.glance:glance-material:1.1.1")
-    implementation(libs.androidx.work.runtime.ktx)
-    implementation("androidx.window:window:1.2.0")
-    implementation("androidx.palette:palette:1.0.0")
-
-    ksp("androidx.room:room-compiler:2.8.4")
+    implementation(libs.androidx.glance)
+    implementation(libs.androidx.glance.appwidget)
+    implementation(libs.androidx.datastore.preferences)
+    // Not used directly: pins the WorkManager version that Glance uses internally.
+    implementation(libs.androidx.work.runtime)
+    implementation(libs.androidx.window)
+    implementation(libs.androidx.palette)
+    implementation(libs.kotlinx.coroutines.android)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 
     debugImplementation(libs.leakcanary.android)
-    debugImplementation(libs.leakcanary.android.core)
-    debugImplementation(libs.leakcanary.object1.watcher.android.androidx)
-    debugImplementation(libs.leakcanary.object1.watcher.android.support.fragments)
+}
+
+tasks.withType<Test>().configureEach {
+    // Plain JUnit 4 (useJUnitPlatform() without a JUnit 5 engine silently ran no tests).
+    useJUnit()
 }

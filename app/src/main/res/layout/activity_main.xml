@@ -5,7 +5,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#D6C08A"
+    android:background="@color/primaryDark"
     tools:context=".MainActivity">
 
     <ScrollView
@@ -17,7 +17,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:background="#F8EECF">
+            android:background="@color/primaryLight">
 
             <!-- 1) Margin label row -->
             <androidx.constraintlayout.widget.ConstraintLayout
@@ -26,8 +26,7 @@
                 android:layout_height="wrap_content"
                 android:paddingTop="6dp"
                 android:paddingBottom="6dp"
-                android:paddingStart="20dp"
-                android:background="#F8EECF">
+                android:paddingStart="20dp">
 
                 <TextView
                     android:id="@+id/margin"
@@ -64,8 +63,7 @@
                 android:paddingTop="8dp"
                 android:paddingBottom="8dp"
                 android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:background="#F8EECF">
+                android:paddingEnd="16dp">
 
                 <EditText
                     android:id="@+id/edit_margin"
@@ -77,8 +75,8 @@
                     android:inputType="number"
                     android:maxLength="4"
                     android:maxLines="1"
-                    android:hint="margin"
-                    android:imeActionLabel="Set"
+                    android:hint="@string/hint_margin"
+                    android:imeActionLabel="@string/ime_action_set"
                     android:imeOptions="actionDone"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
@@ -112,8 +110,7 @@
                 android:layout_height="wrap_content"
                 android:paddingTop="6dp"
                 android:paddingBottom="6dp"
-                android:paddingStart="20dp"
-                android:background="#F8EECF">
+                android:paddingStart="20dp">
 
                 <TextView
                     android:id="@+id/width"
@@ -150,8 +147,7 @@
                 android:paddingTop="8dp"
                 android:paddingBottom="8dp"
                 android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:background="#F8EECF">
+                android:paddingEnd="16dp">
 
                 <EditText
                     android:id="@+id/edit_width"
@@ -163,8 +159,8 @@
                     android:inputType="number"
                     android:maxLength="4"
                     android:maxLines="1"
-                    android:hint="width"
-                    android:imeActionLabel="Set"
+                    android:hint="@string/hint_width"
+                    android:imeActionLabel="@string/ime_action_set"
                     android:imeOptions="actionDone"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
@@ -197,8 +193,7 @@
                 android:layout_height="wrap_content"
                 android:paddingTop="6dp"
                 android:paddingBottom="6dp"
-                android:paddingStart="20dp"
-                android:background="#F8EECF">
+                android:paddingStart="20dp">
 
                 <TextView
                     android:id="@+id/position"
@@ -218,8 +213,7 @@
                 android:paddingTop="8dp"
                 android:paddingBottom="8dp"
                 android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:background="#F8EECF">
+                android:paddingEnd="16dp">
 
                 <Button
                     android:id="@+id/up_button"
@@ -272,8 +266,7 @@
                 android:layout_height="wrap_content"
                 android:paddingTop="6dp"
                 android:paddingBottom="6dp"
-                android:paddingStart="20dp"
-                android:background="#F8EECF">
+                android:paddingStart="20dp">
 
                 <TextView
                     android:id="@+id/size"
@@ -293,8 +286,7 @@
                 android:paddingTop="8dp"
                 android:paddingBottom="8dp"
                 android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:background="#F8EECF">
+                android:paddingEnd="16dp">
 
                 <EditText
                     android:id="@+id/edit_size"
@@ -306,8 +298,8 @@
                     android:inputType="number"
                     android:maxLength="2"
                     android:maxLines="1"
-                    android:hint="size"
-                    android:imeActionLabel="Set"
+                    android:hint="@string/hint_size"
+                    android:imeActionLabel="@string/ime_action_set"
                     android:imeOptions="actionDone"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
@@ -340,8 +332,7 @@
                 android:paddingTop="8dp"
                 android:paddingBottom="8dp"
                 android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:background="#F8EECF">
+                android:paddingEnd="16dp">
 
                 <TextView
                     android:id="@+id/font_color_text"
@@ -394,8 +385,7 @@
                 android:paddingTop="8dp"
                 android:paddingBottom="8dp"
                 android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:background="#F8EECF">
+                android:paddingEnd="16dp">
 
                 <TextView
                     android:id="@+id/bg_color_text"
@@ -449,8 +439,7 @@
                 android:layout_height="wrap_content"
                 android:paddingTop="6dp"
                 android:paddingBottom="6dp"
-                android:paddingStart="20dp"
-                android:background="#F8EECF">
+                android:paddingStart="20dp">
 
                 <TextView
                     android:id="@+id/typeface"
@@ -470,8 +459,7 @@
                 android:paddingTop="8dp"
                 android:paddingBottom="8dp"
                 android:paddingStart="12dp"
-                android:paddingEnd="12dp"
-                android:background="#F8EECF">
+                android:paddingEnd="12dp">
 
                 <Button
                     android:id="@+id/normal_button"
@@ -539,8 +527,7 @@
                 android:layout_height="wrap_content"
                 android:paddingTop="6dp"
                 android:paddingBottom="6dp"
-                android:paddingStart="20dp"
-                android:background="#F8EECF">
+                android:paddingStart="20dp">
 
                 <TextView
                     android:id="@+id/ttf_position"
@@ -561,8 +548,7 @@
                 android:paddingTop="8dp"
                 android:paddingBottom="8dp"
                 android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:background="#F8EECF">
+                android:paddingEnd="16dp">
 
                 <Button
                     android:id="@+id/ttf_up_button"
@@ -615,8 +601,7 @@
                 android:layout_height="wrap_content"
                 android:paddingTop="6dp"
                 android:paddingBottom="6dp"
-                android:paddingStart="20dp"
-                android:background="#F8EECF">
+                android:paddingStart="20dp">
 
                 <TextView
                     android:id="@+id/fyt_display"
@@ -636,8 +621,7 @@
                 android:paddingTop="8dp"
                 android:paddingBottom="8dp"
                 android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:background="#F8EECF">
+                android:paddingEnd="16dp">
 
                 <Button
                     android:id="@+id/fyt_meta_button"
@@ -676,8 +660,7 @@
                 android:paddingTop="6dp"
                 android:paddingBottom="6dp"
                 android:paddingStart="20dp"
-                android:paddingEnd="20dp"
-                android:background="#F8EECF">
+                android:paddingEnd="20dp">
 
                 <TextView
                     android:id="@+id/display_ui_text"
@@ -697,14 +680,14 @@
                     android:id="@+id/display_ui_box"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    app:layout_constraintStart_toStartOf="@id/guideline_center"
-                    app:layout_constraintEnd_toEndOf="@id/guideline_center"
+                    app:layout_constraintStart_toStartOf="@id/guideline_display_ui"
+                    app:layout_constraintEnd_toEndOf="@id/guideline_display_ui"
                     app:layout_constraintTop_toTopOf="@id/display_ui_text"
                     app:layout_constraintBottom_toBottomOf="@id/display_ui_text"
                     android:onClick="setDisplayUI"/>
 
                 <androidx.constraintlayout.widget.Guideline
-                    android:id="@+id/guideline_center"
+                    android:id="@+id/guideline_display_ui"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
@@ -736,8 +719,7 @@
                 android:paddingTop="6dp"
                 android:paddingBottom="6dp"
                 android:paddingStart="20dp"
-                android:paddingEnd="20dp"
-                android:background="#F8EECF">
+                android:paddingEnd="20dp">
 
                 <TextView
                     android:id="@+id/autostart_app_text"
@@ -757,14 +739,14 @@
                     android:id="@+id/autostart_app"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    app:layout_constraintStart_toStartOf="@id/guideline_center"
-                    app:layout_constraintEnd_toEndOf="@id/guideline_center"
+                    app:layout_constraintStart_toStartOf="@id/guideline_autostart"
+                    app:layout_constraintEnd_toEndOf="@id/guideline_autostart"
                     app:layout_constraintTop_toTopOf="@id/autostart_app_text"
                     app:layout_constraintBottom_toBottomOf="@id/autostart_app_text"
                     android:onClick="setAutostart"/>
 
                 <androidx.constraintlayout.widget.Guideline
-                    android:id="@+id/guideline_center"
+                    android:id="@+id/guideline_autostart"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
@@ -796,8 +778,7 @@
                 android:paddingTop="6dp"
                 android:paddingBottom="6dp"
                 android:paddingStart="20dp"
-                android:paddingEnd="20dp"
-                android:background="#F8EECF">
+                android:paddingEnd="20dp">
 
                 <TextView
                     android:id="@+id/display_titles_text"
@@ -817,14 +798,14 @@
                     android:id="@+id/display_titles_box"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    app:layout_constraintStart_toStartOf="@id/guideline_center"
-                    app:layout_constraintEnd_toEndOf="@id/guideline_center"
+                    app:layout_constraintStart_toStartOf="@id/guideline_display_titles"
+                    app:layout_constraintEnd_toEndOf="@id/guideline_display_titles"
                     app:layout_constraintTop_toTopOf="@id/display_titles_text"
                     app:layout_constraintBottom_toBottomOf="@id/display_titles_text"
                     android:onClick="setDisplayTitles"/>
 
                 <androidx.constraintlayout.widget.Guideline
-                    android:id="@+id/guideline_center"
+                    android:id="@+id/guideline_display_titles"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
@@ -838,8 +819,7 @@
                 android:paddingTop="6dp"
                 android:paddingBottom="6dp"
                 android:paddingStart="20dp"
-                android:paddingEnd="20dp"
-                android:background="#F8EECF">
+                android:paddingEnd="20dp">
 
                 <TextView
                     android:id="@+id/display_artist_text"
@@ -859,14 +839,14 @@
                     android:id="@+id/display_artist_box"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    app:layout_constraintStart_toStartOf="@id/guideline_center"
-                    app:layout_constraintEnd_toEndOf="@id/guideline_center"
+                    app:layout_constraintStart_toStartOf="@id/guideline_display_artist"
+                    app:layout_constraintEnd_toEndOf="@id/guideline_display_artist"
                     app:layout_constraintTop_toTopOf="@id/display_artist_text"
                     app:layout_constraintBottom_toBottomOf="@id/display_artist_text"
                     android:onClick="setDisplayArtist"/>
 
                 <androidx.constraintlayout.widget.Guideline
-                    android:id="@+id/guideline_center"
+                    android:id="@+id/guideline_display_artist"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
@@ -880,8 +860,7 @@
                 android:paddingTop="6dp"
                 android:paddingBottom="6dp"
                 android:paddingStart="20dp"
-                android:paddingEnd="20dp"
-                android:background="#F8EECF">
+                android:paddingEnd="20dp">
 
                 <TextView
                     android:id="@+id/exclude_for_widget_text"
@@ -901,14 +880,14 @@
                     android:id="@+id/exclude_for_widget_box"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    app:layout_constraintStart_toStartOf="@id/guideline_center"
-                    app:layout_constraintEnd_toEndOf="@id/guideline_center"
+                    app:layout_constraintStart_toStartOf="@id/guideline_exclude_for_widget"
+                    app:layout_constraintEnd_toEndOf="@id/guideline_exclude_for_widget"
                     app:layout_constraintTop_toTopOf="@id/exclude_for_widget_text"
                     app:layout_constraintBottom_toBottomOf="@id/exclude_for_widget_text"
                     android:onClick="setExcludeForWidget"/>
 
                 <androidx.constraintlayout.widget.Guideline
-                    android:id="@+id/guideline_center"
+                    android:id="@+id/guideline_exclude_for_widget"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
@@ -938,8 +917,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:paddingTop="6dp"
-                android:paddingBottom="8dp"
-                android:background="#F8EECF">
+                android:paddingBottom="8dp">
 
                 <Button
                     android:id="@+id/exclude_button"
@@ -964,8 +942,7 @@
                 android:layout_height="wrap_content"
                 android:paddingTop="6dp"
                 android:paddingBottom="6dp"
-                android:paddingStart="20dp"
-                android:background="#F8EECF">
+                android:paddingStart="20dp">
 
                 <TextView
                     android:id="@+id/permissions"
@@ -983,8 +960,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:paddingTop="8dp"
-                android:paddingBottom="8dp"
-                android:background="#F8EECF">
+                android:paddingBottom="8dp">
 
                 <Button
                     android:id="@+id/read_phone_state_button"
@@ -1007,8 +983,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:paddingTop="8dp"
-                android:paddingBottom="8dp"
-                android:background="#F8EECF">
+                android:paddingBottom="8dp">
 
                 <Button
                     android:id="@+id/outgoing_calls_button"
@@ -1031,8 +1006,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:paddingTop="8dp"
-                android:paddingBottom="8dp"
-                android:background="#F8EECF">
+                android:paddingBottom="8dp">
 
                 <Button
                     android:id="@+id/notification_listener_button"
@@ -1055,8 +1029,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:paddingTop="8dp"
-                android:paddingBottom="8dp"
-                android:background="#F8EECF">
+                android:paddingBottom="8dp">
 
                 <Button
                     android:id="@+id/battery_optimization_button"
@@ -1079,8 +1052,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:paddingTop="8dp"
-                android:paddingBottom="8dp"
-                android:background="#F8EECF">
+                android:paddingBottom="8dp">
 
                 <Button
                     android:id="@+id/draw_over_apps_button"
@@ -1103,8 +1075,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:paddingTop="8dp"
-                android:paddingBottom="12dp"
-                android:background="#F8EECF">
+                android:paddingBottom="12dp">
 
                 <Button
                     android:id="@+id/storage_permissions_button"

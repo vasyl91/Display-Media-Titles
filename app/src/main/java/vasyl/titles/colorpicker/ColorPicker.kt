@@ -1,16 +1,14 @@
 package vasyl.titles.colorpicker
 
-import android.app.Activity
 import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Color
-import android.os.Build
 import android.os.Bundle
 import android.text.InputFilter
-import android.util.DisplayMetrics
 import android.view.KeyEvent
+import android.view.LayoutInflater
 import android.view.View
-import android.view.WindowInsets
+import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
@@ -23,8 +21,7 @@ import androidx.annotation.IntRange
 import androidx.core.content.ContextCompat
 import androidx.core.view.updatePadding
 import androidx.fragment.app.DialogFragment
-import androidx.fragment.app.FragmentActivity
-import com.google.android.flexbox.FlexboxLayout
+import androidx.window.layout.WindowMetricsCalculator
 import vasyl.titles.R
 
 class ColorPicker : DialogFragment(), OnSeekBarChangeListener {
@@ -135,8 +132,8 @@ class ColorPicker : DialogFragment(), OnSeekBarChangeListener {
     }
 
     override fun onCreateView(
-        inflater: android.view.LayoutInflater,
-        container: android.view.ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         return inflater.inflate(R.layout.materialcolorpicker__layout_color_picker, container, false)
@@ -148,135 +145,85 @@ class ColorPicker : DialogFragment(), OnSeekBarChangeListener {
         var textSize = 0
         var padding = 0
 
-        activity?.let { activity ->
-            val metrics = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                val windowMetrics = activity.windowManager.currentWindowMetrics
-                val insets = windowMetrics.windowInsets.getInsetsIgnoringVisibility(WindowInsets.Type.systemBars())
-                windowMetrics.bounds.let {
-                    // Adjust for system bars if needed
-                    val screenWidth = it.width() + insets.left + insets.right
-                    val screenHeight = it.height() + insets.top + insets.bottom
-                    DisplayMetrics().apply {
-                        widthPixels = screenWidth
-                        heightPixels = screenHeight
-                    }
-                }
-            } else {
-                @Suppress("DEPRECATION")
-                activity.windowManager.defaultDisplay.let { display ->
-                    DisplayMetrics().also { display.getRealMetrics(it) }
-                }
-            }
-
-            var deviceWidth = metrics.widthPixels
-            val configuration = context?.resources?.configuration
-            if (configuration?.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                deviceWidth = metrics.heightPixels
-            }
-
+        windowSize()?.let { (width, height) ->
+            val landscape = context?.resources?.configuration?.orientation == Configuration.ORIENTATION_LANDSCAPE
+            val deviceWidth = if (landscape) height else width
             textSize = (deviceWidth * 0.015).toInt()
             padding = (deviceWidth * 0.02).toInt()
         }
 
-        val pickerContainer = view.findViewById<FlexboxLayout>(R.id.pickerContainer)
-        pickerContainer?.updatePadding(
+        // Looked up as plain Views: only the padding is changed, so the layout variants
+        // (layout-land / layout-port) may use any container type without a ClassCastException.
+        view.findViewById<View>(R.id.pickerContainer)?.updatePadding(
             left = padding,
             right = padding
         )
-
-        val pickerContainerBottom = view.findViewById<FlexboxLayout>(R.id.pickerContainerBottom)
-        pickerContainerBottom?.updatePadding(
+        view.findViewById<View>(R.id.pickerContainerBottom)?.updatePadding(
             bottom = padding
         )
 
         colorView = view.findViewById(R.id.colorView)
 
         alphaSeekBar = view.findViewById(R.id.alphaSeekBar)
-        alphaSeekBar?.updatePadding(
-            right = padding * 2
-        )
         redSeekBar = view.findViewById(R.id.redSeekBar)
-        redSeekBar?.updatePadding(
-            right = padding * 2
-        )
         greenSeekBar = view.findViewById(R.id.greenSeekBar)
-        greenSeekBar?.updatePadding(
-            right = padding * 2
-        )
         blueSeekBar = view.findViewById(R.id.blueSeekBar)
-        blueSeekBar?.updatePadding(
-            right = padding * 2
-        )
-
-        alphaSeekBar?.setOnSeekBarChangeListener(this)
-        redSeekBar?.setOnSeekBarChangeListener(this)
-        greenSeekBar?.setOnSeekBarChangeListener(this)
-        blueSeekBar?.setOnSeekBarChangeListener(this)
+        for (seekBar in listOfNotNull(alphaSeekBar, redSeekBar, greenSeekBar, blueSeekBar)) {
+            seekBar.updatePadding(right = padding * 2)
+            seekBar.setOnSeekBarChangeListener(this)
+        }
 
         textView = view.findViewById(R.id.textView)
-        textView?.setTextSize(textSize.toFloat())
+        textView?.textSize = textSize.toFloat()
 
         hexCode = view.findViewById(R.id.hexCode)
-        activity?.let {
+        context?.let {
             hexCode?.setTextColor(ContextCompat.getColor(it, R.color.black))
         }
-        hexCode?.setTextSize(textSize.toFloat())
+        hexCode?.textSize = textSize.toFloat()
         hexCode?.filters = arrayOf(InputFilter.LengthFilter(if (withAlpha) 8 else 6))
         hexCode?.setOnEditorActionListener { v, actionId, event ->
-            if (actionId == EditorInfo.IME_ACTION_SEARCH ||
-                actionId == EditorInfo.IME_ACTION_DONE ||
-                (event.action == KeyEvent.ACTION_DOWN && event.keyCode == KeyEvent.KEYCODE_ENTER)
-            ) {
+            // event is null for IME actions: "Next"/"Go" on the soft keyboard crashed with an NPE.
+            val enterPressed = event != null &&
+                event.action == KeyEvent.ACTION_DOWN &&
+                event.keyCode == KeyEvent.KEYCODE_ENTER
+            if (actionId == EditorInfo.IME_ACTION_SEARCH || actionId == EditorInfo.IME_ACTION_DONE || enterPressed) {
                 updateColorView(v.text.toString())
-                val imm = activity?.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-                imm.hideSoftInputFromWindow(hexCode?.windowToken, 0)
-
+                context?.getSystemService(InputMethodManager::class.java)
+                    ?.hideSoftInputFromWindow(hexCode?.windowToken, 0)
                 true
             } else {
                 false
             }
         }
 
-        val okColor = view.findViewById<Button>(R.id.okColorButton)
-        okColor?.setTextSize(textSize.toFloat())
-        okColor?.setOnClickListener {
-            sendColor()
+        view.findViewById<Button>(R.id.okColorButton)?.apply {
+            this.textSize = textSize.toFloat()
+            setOnClickListener { sendColor() }
+            updatePadding(left = textSize, right = textSize)
         }
-        okColor?.updatePadding(
-            left = textSize,
-            right = textSize
-        )
 
         initUi()
     }
 
     override fun onStart() {
         super.onStart()
-        activity?.let { activity ->
-            val metrics = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                val windowMetrics = activity.windowManager.currentWindowMetrics
-                val insets = windowMetrics.windowInsets.getInsetsIgnoringVisibility(WindowInsets.Type.systemBars())
-                windowMetrics.bounds.let {
-                    DisplayMetrics().apply {
-                        widthPixels = it.width() + insets.left + insets.right
-                        heightPixels = it.height() + insets.top + insets.bottom
-                    }
-                }
-            } else {
-                @Suppress("DEPRECATION")
-                activity.windowManager.defaultDisplay.let { display ->
-                    DisplayMetrics().also { display.getRealMetrics(it) }
-                }
-            }
-
-            val width = (metrics.widthPixels * 0.7).toInt()
-            val height = (metrics.heightPixels * 0.6).toInt()
-            
+        windowSize()?.let { (width, height) ->
             dialog?.window?.apply {
-                setLayout(width, height)
-                setBackgroundDrawableResource(android.R.color.transparent) // Add this
+                setLayout((width * 0.7).toInt(), (height * 0.6).toInt())
+                setBackgroundDrawableResource(android.R.color.transparent)
             }
         }
+    }
+
+    /**
+     * Size of the activity window. On Android 11+ the system bar insets used to be added to the
+     * window bounds a second time, so the dialog and its texts were larger than on older versions.
+     */
+    private fun windowSize(): Pair<Int, Int>? {
+        val activity = activity ?: return null
+        val bounds = WindowMetricsCalculator.getOrCreate().computeCurrentWindowMetrics(activity).bounds
+        return bounds.width() to bounds.height()
     }
 
     fun enableAutoClose() {
@@ -311,8 +258,8 @@ class ColorPicker : DialogFragment(), OnSeekBarChangeListener {
 
     private fun sendColor() {
         callback?.onColorChosen(getColor())
-        if (autoclose) {
-            dismiss()
+        if (autoclose && isAdded) {
+            dismissAllowingStateLoss()
         }
     }
 
@@ -338,7 +285,7 @@ class ColorPicker : DialogFragment(), OnSeekBarChangeListener {
             greenSeekBar?.progress = green
             blueSeekBar?.progress = blue
         } catch (ignored: IllegalArgumentException) {
-            activity?.resources?.getText(R.string.materialcolorpicker__errHex)?.let {
+            context?.resources?.getText(R.string.materialcolorpicker__errHex)?.let {
                 hexCode?.error = it
             }
         }
@@ -428,6 +375,6 @@ class ColorPicker : DialogFragment(), OnSeekBarChangeListener {
         blueSeekBar = null
         textView = null
         hexCode = null
-        callback = null  
+        callback = null
     }
 }

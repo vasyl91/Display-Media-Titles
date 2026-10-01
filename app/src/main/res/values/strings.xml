@@ -6,6 +6,20 @@
     <string name="set_margin">Set margin</string>
     <string name="available_margin">%1$s(available: %2$s):</string>
     <string name="set_width">Set width</string>
+    <string name="hint_margin">margin</string>
+    <string name="hint_width">width</string>
+    <string name="hint_size">size</string>
+    <string name="ime_action_set">Set</string>
+
+    <string name="toast_margin_set">Margin has been set!</string>
+    <string name="toast_width_set">Width has been set!</string>
+    <string name="toast_text_color_set">Status color has been set!</string>
+    <string name="toast_bg_color_set">Background color has been set!</string>
+    <string name="toast_size_set">Font size has been set!</string>
+    <string name="toast_no_file_picker">No file picker available on this device.</string>
+    <string name="toast_invalid_font">This file is not a valid TrueType/OpenType font.</string>
+    <!-- Repeated until it is wider than the caption, so the preview scrolls. -->
+    <string name="overlay_preview_text">Display Media Titles: caption preview</string>
     <string name="available_width">%1$s(available: %2$s):</string>
 
     <string name="set_font_color">Set</string>
@@ -14,9 +28,9 @@
     <string name="position">Caption height:</string>
     <string name="center">Center</string>
     <string name="up">Up</string>
-    <string name="up_var">%1$s</string>
+    <string name="up_var" translatable="false">%1$s</string>
     <string name="down">Down</string>
-    <string name="down_var">%1$s</string>
+    <string name="down_var" translatable="false">%1$s</string>
 
     <string name="font_size">Font size (max. 30):</string>
     <string name="set_size">Set size</string>
@@ -32,9 +46,9 @@
     <string name="ttf_position">TTF height:</string>
     <string name="ttf_center">Center</string>
     <string name="ttf_up">Up</string>
-    <string name="ttf_up_var">%1$s</string>
+    <string name="ttf_up_var" translatable="false">%1$s</string>
     <string name="ttf_down">Down</string>
-    <string name="ttf_down_var">%1$s</string>
+    <string name="ttf_down_var" translatable="false">%1$s</string>
 
     <string name="fyt_display">Get FYT media data from:</string>
     <string name="fyt_meta">Metadata</string>
@@ -50,9 +64,9 @@
     <string name="exclude_summary">Excluded apps won\'t affect the widget</string>
     <string name="exclude_button">Exclude apps</string>
 
-    <string name="song_str">%1$s</string>   
+    <string name="song_str" translatable="false">%1$s</string>
     <string name="artist_and_song_str">%1$s - %2$s</string>
-    <string name="space">\u0020</string>
+    <string name="space" translatable="false">\u0020</string>
 
     <string name="permissions">Required permissions:</string>
     <string name="read_phone_state">Read phone state</string>

@@ -1,22 +1,13 @@
-package vasyl.titles
+package vasyl.titles.helpers
 
 import android.text.InputFilter
 import android.text.Spanned
 
-class InputFilterMinMax : InputFilter {
-    private var min: Int
-    private var max: Int
+/** Accepts only integers within [min]..[max] (in either order). An empty field is allowed. */
+class InputFilterMinMax(private val min: Int, private val max: Int) : InputFilter {
 
-    @Suppress("unused")
-    constructor(min: Int, max: Int) {
-        this.min = min
-        this.max = max
-    }
-
-    constructor(min: String, max: String) {
-        this.min = min.toInt()
-        this.max = max.toInt()
-    }
+    /** Invalid numbers fall back to 0 instead of crashing with NumberFormatException. */
+    constructor(min: String, max: String) : this(min.trim().toIntOrNull() ?: 0, max.trim().toIntOrNull() ?: 0)
 
     override fun filter(
         source: CharSequence,
@@ -25,21 +16,16 @@ class InputFilterMinMax : InputFilter {
         dest: Spanned,
         dstart: Int,
         dend: Int
-    ): String? {
-        try {
-            val newVal = dest.subSequence(0, dstart).toString() + 
-                         source.subSequence(start, end).toString() + 
-                         dest.subSequence(dend, dest.length).toString()
-            if (newVal.isEmpty()) return null
-            val input = newVal.toInt()
-            if (isInRange(min, max, input)) return null
-        } catch (nfe: NumberFormatException) {
-            nfe.printStackTrace()
-        }
-        return ""
+    ): CharSequence? {
+        val newValue = StringBuilder(dest)
+            .replace(dstart, dend, source.subSequence(start, end).toString())
+            .toString()
+        if (newValue.isEmpty()) return null
+        // Not a number (or out of Int range): reject the edit.
+        val input = newValue.toIntOrNull() ?: return ""
+        return if (isInRange(min, max, input)) null else ""
     }
 
-    private fun isInRange(a: Int, b: Int, c: Int): Boolean {
-        return if (b > a) c in a..b else c in b..a
-    }
+    private fun isInRange(a: Int, b: Int, c: Int): Boolean =
+        if (b > a) c in a..b else c in b..a
 }

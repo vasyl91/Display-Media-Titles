@@ -1,26 +1,20 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
+# Project specific R8 rules.
 #
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# AGP 9 enables android.r8.strictFullModeForKeepRules by default: "-keep class A" no longer keeps the
+# default constructor implicitly, so every class that is instantiated reflectively keeps <init>()
+# explicitly below.
+#
+# Removed on purpose:
+#  - "-assumenosideeffects class kotlin.jvm.internal.Intrinsics { ... }": it deleted Kotlin null
+#    checks and lateinit checks, turning clear exceptions into silent corruption / later crashes.
+#  - "-optimizationpasses", "-dontpreverify", "-verbose": ignored by R8.
+#  - "-keep class vasyl.titles.widget.** { *; }": replaced by the targeted Glance rules below.
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Readable stack traces (the original source file name is hidden).
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
-
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
-
-# Remove Compose tracing strings
+# Remove Compose runtime tracing calls.
 -assumenosideeffects public class androidx.compose.runtime.ComposerKt {
     boolean isTraceInProgress();
     void traceEventStart(int,int,int,java.lang.String);
@@ -28,26 +22,11 @@
     void traceEventEnd();
 }
 
-# Keep Glance widget classes
--keep class * extends androidx.glance.appwidget.GlanceAppWidget
--keep class * extends androidx.glance.appwidget.GlanceAppWidgetReceiver
+# Glance stores class names in RemoteViews / action parameters and creates the instances reflectively.
+-keep class * extends androidx.glance.appwidget.GlanceAppWidget { <init>(); }
+-keep class * extends androidx.glance.appwidget.GlanceAppWidgetReceiver { <init>(); }
+-keep class * implements androidx.glance.appwidget.action.ActionCallback { <init>(); }
 
-# Keep your widget classes
--keep class vasyl.titles.widget.** { *; }
-
-# Optimize and shrink aggressively
--optimizationpasses 5
--dontpreverify
--verbose
-
-# Remove unused Kotlin metadata
--assumenosideeffects class kotlin.jvm.internal.Intrinsics {
-    public static void checkNotNull(java.lang.Object);
-    public static void checkNotNull(java.lang.Object, java.lang.String);
-    public static void checkParameterIsNotNull(java.lang.Object, java.lang.String);
-    public static void checkNotNullParameter(java.lang.Object, java.lang.String);
-    public static void checkExpressionValueIsNotNull(java.lang.Object, java.lang.String);
-    public static void checkNotNullExpressionValue(java.lang.Object, java.lang.String);
-    public static void checkReturnedValueIsNotNull(java.lang.Object, java.lang.String, java.lang.String);
-    public static void throwUninitializedPropertyAccessException(java.lang.String);
-}
+# AppFilter.loadByName() instantiates the class named in R.string.app_filter_class via reflection.
+# Keeps every AppFilter implementation (in any package) with its name and no-arg constructor.
+-keep class * extends vasyl.titles.excludeapps.AppFilter { <init>(); }

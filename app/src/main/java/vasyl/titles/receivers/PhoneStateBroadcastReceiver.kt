@@ -1,30 +1,23 @@
-@file:Suppress("DEPRECATION")
+package vasyl.titles.receivers
 
-package vasyl.titles
-
-import android.Manifest
-import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.os.Build
-import android.telephony.PhoneStateListener
 import android.telephony.TelephonyManager
-import androidx.core.content.ContextCompat
 
+/**
+ * Receives android.intent.action.PHONE_STATE (protected broadcast, only the system can send it).
+ *
+ * The broadcast already carries the new state, so [PhoneListener.CALLING] is updated right away
+ * instead of only registering yet another listener (see [PhoneListener.register]).
+ */
 class PhoneStateBroadcastReceiver : BroadcastReceiver() {
-    @SuppressLint("UnsafeProtectedBroadcastReceiver")
-    override fun onReceive(context: Context, intent: Intent) {
-        val telephonyManager = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
 
-        if (Build.VERSION.SDK_INT >= 31) {
-            if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
-                telephonyManager.listen(PhoneListener(), PhoneStateListener.LISTEN_CALL_STATE)
-            }
-        } else {
-            // no permission needed
-            telephonyManager.listen(PhoneListener(), PhoneStateListener.LISTEN_CALL_STATE)
+    override fun onReceive(context: Context, intent: Intent) {
+        if (intent.action == TelephonyManager.ACTION_PHONE_STATE_CHANGED) {
+            PhoneListener.onPhoneStateBroadcast(intent.getStringExtra(TelephonyManager.EXTRA_STATE))
         }
+        // Keeps call state updates coming while the process is alive (registered once per process).
+        PhoneListener.register(context)
     }
 }

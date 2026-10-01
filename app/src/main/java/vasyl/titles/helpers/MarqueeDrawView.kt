@@ -1,28 +1,35 @@
 package vasyl.titles.helpers
 
-import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.PorterDuff
 import android.graphics.Typeface
+import android.os.SystemClock
 import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.View
 import java.io.File
 
+/**
+ * Single line text with a continuous marquee, used as the titles overlay.
+ *
+ * Scrolling is driven by display frames (postOnAnimation) instead of a ValueAnimator:
+ *  - it only runs while the text is wider than the view and the window is visible; the animator was
+ *    started before the first layout (width 0) and then redrew the overlay every frame forever, even
+ *    when the text fitted,
+ *  - it keeps working when "Animator duration scale" is off (animators end immediately then).
+ */
 class MarqueeDrawView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null
 ) : View(context, attrs) {
 
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
-    private val bgPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private var tf: Typeface? = null
     private var text: String = ""
     private var offsetX = 0f
-    private var animator: ValueAnimator? = null
 
     // scrolling control
     private var scrollEnabled = true
@@ -33,6 +40,25 @@ class MarqueeDrawView @JvmOverloads constructor(
     private var bgColor: Int = Color.TRANSPARENT
     private var bgCornerRadius: Float = 0f
 
+    private var scrolling = false
+    private var scrollStartTime = 0L
+    private var scrollCycleMs = 1L
+    private var scrollDistance = 0f
+
+    // Cached metrics: onDraw runs every frame while scrolling (fontMetricsInt allocates).
+    private var cachedTextWidth = -1f
+    private var cachedFontHeight = -1
+
+    private val scrollFrame = object : Runnable {
+        override fun run() {
+            if (!scrolling) return
+            val elapsed = SystemClock.uptimeMillis() - scrollStartTime
+            offsetX = (elapsed % scrollCycleMs).toFloat() / scrollCycleMs * scrollDistance
+            invalidate()
+            postOnAnimation(this)
+        }
+    }
+
     init {
         paint.color = Color.WHITE
         paint.textSize = TypedValue.applyDimension(
@@ -40,32 +66,27 @@ class MarqueeDrawView @JvmOverloads constructor(
             16f,
             resources.displayMetrics
         )
-        bgPaint.style = Paint.Style.FILL
-        bgPaint.color = Color.TRANSPARENT
         // ensure view itself has no background drawable that interferes
         background = null
     }
-    
+
     fun setText(value: String?) {
         text = value ?: ""
-        requestLayout()
-        invalidate()
-        restartMarqueeIfNeeded()
+        onTextMetricsChanged()
     }
 
     fun setTextColor(color: Int) {
         paint.color = color
         invalidate()
     }
+
     fun setTextSizeSp(sizeSp: Float) {
         paint.textSize = TypedValue.applyDimension(
             TypedValue.COMPLEX_UNIT_SP,
             sizeSp,
             resources.displayMetrics
         )
-        requestLayout()
-        invalidate()
-        restartMarqueeIfNeeded()
+        onTextMetricsChanged()
     }
 
     /**
@@ -76,80 +97,75 @@ class MarqueeDrawView @JvmOverloads constructor(
     fun setTypefaceMode(mode: Int) {
         // only apply built-in styles if no custom TTF is loaded
         if (tf != null) return
-        val style = when (mode) {
-            1 -> Typeface.BOLD
-            2 -> Typeface.ITALIC
-            else -> Typeface.NORMAL
-        }
-        paint.typeface = Typeface.create(Typeface.DEFAULT, style)
-        invalidate()
+        paint.typeface = Typeface.create(Typeface.DEFAULT, styleOf(mode))
+        onTextMetricsChanged()
     }
 
     /**
      * Load a custom TTF file. Pass null to clear the custom TTF and revert to style-based typeface.
+     * The last font is cached: the overlay view is re-created on every track change, which used to
+     * reload the font file from disk on the main thread each time.
      */
     fun setTypefaceFile(file: File?) {
-        tf = try {
-            file?.takeIf { it.exists() }?.let { Typeface.createFromFile(it) }
-        } catch (e: Exception) {
-            null
-        }
+        tf = file?.takeIf { it.isFile }?.let { loadTypeface(it) }
         paint.typeface = tf ?: Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
-        requestLayout()
-        invalidate()
-        restartMarqueeIfNeeded()
+        onTextMetricsChanged()
     }
 
     /**
      * Set background color. If `color` equals Color.TRANSPARENT we leave it transparent,
-     * otherwise we ensure the paint uses full opacity (alpha = 0xFF) unless caller provided alpha.
+     * otherwise a color without alpha is made fully opaque.
      *
      * cornerRadiusPx is optional and defaults to 0f.
      */
     fun setBgColorInt(color: Int, cornerRadiusPx: Float = 0f) {
-        // preserve explicit alpha if user provided one; otherwise force full opacity for non-transparent colors
-        val finalColor = if (color == Color.TRANSPARENT) {
+        bgColor = if (color == Color.TRANSPARENT) {
             Color.TRANSPARENT
         } else {
             val alpha = (color ushr 24) and 0xFF
             if (alpha == 0) (0xFF000000.toInt() or (color and 0x00FFFFFF)) else color
         }
-
-        bgColor = finalColor
-        // ensure bgPaint uses the final color and fully opaque alpha when not transparent
-        bgPaint.color = finalColor
-        bgPaint.alpha = if (finalColor == Color.TRANSPARENT) 0 else 255
         bgCornerRadius = cornerRadiusPx
 
         // make sure view alpha is 1
         this.alpha = 1f
-
         invalidate()
     }
+
     fun enableScroll(enable: Boolean) {
         scrollEnabled = enable
-        if (!enable) stopMarquee() else restartMarqueeIfNeeded()
+        if (enable) restartMarqueeIfNeeded() else stopMarquee()
     }
+
     fun stopMarquee() {
-        animator?.cancel()
-        animator = null
+        scrolling = false
+        removeCallbacks(scrollFrame)
         offsetX = 0f
         invalidate()
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val measuredWidth = MeasureSpec.getSize(widthMeasureSpec)
-        val fm = paint.fontMetricsInt
-        val h = (fm.bottom - fm.top) + paddingTop + paddingBottom
-        setMeasuredDimension(measuredWidth, h)
+        // An exact height (the overlay window) is filled completely, so the background covers the
+        // whole window; before, only the text line was drawn and the rest of an opaque window was
+        // undefined (usually black). The text itself stays in the top box, exactly where it was.
+        val measuredHeight = if (MeasureSpec.getMode(heightMeasureSpec) == MeasureSpec.EXACTLY) {
+            MeasureSpec.getSize(heightMeasureSpec)
+        } else {
+            textBoxHeight()
+        }
+        setMeasuredDimension(measuredWidth, measuredHeight)
+    }
+
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        if (w != oldw) restartMarqueeIfNeeded()
     }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
 
-        // Draw background: fill entire canvas for solid appearance, or clear for transparent
         if (bgColor != Color.TRANSPARENT) {
-            // fill entire canvas with bgColor (ensures no semi-transparency due to rounded rect antialias)
             canvas.drawColor(bgColor)
         } else {
             canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
@@ -157,52 +173,20 @@ class MarqueeDrawView @JvmOverloads constructor(
 
         if (text.isEmpty()) return
 
-        val textWidth = paint.measureText(text)
-        val startX = paddingLeft.toFloat() - offsetX
-        val centerY = (height / 2f) - ((paint.descent() + paint.ascent()) / 2f)
+        val textWidth = textWidth()
+        // Vertically centered in the text box at the top of the view (same position as before).
+        val centerY = (textBoxHeight() / 2f) - ((paint.descent() + paint.ascent()) / 2f)
 
-        if (textWidth <= (width - paddingLeft - paddingRight) || !scrollEnabled) {
+        if (!scrolling || textWidth <= (width - paddingLeft - paddingRight)) {
             // not scrolling, draw at start
             canvas.drawText(text, paddingLeft.toFloat(), centerY, paint)
         } else {
             // scrolling - draw text repeatedly for continuous marquee
-            var x = startX
+            var x = paddingLeft.toFloat() - offsetX
             while (x < width.toFloat()) {
                 canvas.drawText(text, x, centerY, paint)
                 x += textWidth + spacing
             }
-        }
-    }
-
-    private fun restartMarqueeIfNeeded() {
-        stopMarquee()
-
-        if (!scrollEnabled) return
-        if (text.isEmpty()) return
-
-        val textWidth = paint.measureText(text)
-        val availableSpace = width - paddingLeft - paddingRight
-        if (textWidth <= availableSpace) return
-
-        // total distance to animate (one full text width + spacing)
-        val totalDistance = textWidth + spacing
-
-        // compute animation duration:
-        val duration = scrollSpeedPxPerSec?.let { speedPxPerSec ->
-            // compute duration such that speed = pixels/sec
-            val ms = ((totalDistance / speedPxPerSec) * 1000f).toLong()
-            // clamp sensible min/max to avoid extreme values
-            ms.coerceAtLeast(2000L).coerceAtMost(120_000L)
-        } ?: scrollDurationMs.coerceAtLeast(2000L)
-
-        animator = ValueAnimator.ofFloat(0f, totalDistance).apply {
-            this.duration = duration
-            repeatCount = ValueAnimator.INFINITE
-            addUpdateListener {
-                offsetX = it.animatedValue as Float
-                invalidate()
-            }
-            start()
         }
     }
 
@@ -214,5 +198,91 @@ class MarqueeDrawView @JvmOverloads constructor(
     override fun onDetachedFromWindow() {
         stopMarquee()
         super.onDetachedFromWindow()
+    }
+
+    override fun onWindowVisibilityChanged(visibility: Int) {
+        super.onWindowVisibilityChanged(visibility)
+        if (visibility == VISIBLE) restartMarqueeIfNeeded() else stopMarquee()
+    }
+
+    private fun onTextMetricsChanged() {
+        cachedTextWidth = -1f
+        cachedFontHeight = -1
+        requestLayout()
+        invalidate()
+        restartMarqueeIfNeeded()
+    }
+
+    private fun textWidth(): Float {
+        if (cachedTextWidth < 0f) cachedTextWidth = if (text.isEmpty()) 0f else paint.measureText(text)
+        return cachedTextWidth
+    }
+
+    private fun textBoxHeight(): Int {
+        if (cachedFontHeight < 0) {
+            val fm = paint.fontMetricsInt
+            cachedFontHeight = fm.bottom - fm.top
+        }
+        return cachedFontHeight + paddingTop + paddingBottom
+    }
+
+    private fun restartMarqueeIfNeeded() {
+        stopMarquee()
+
+        if (!scrollEnabled || text.isEmpty()) return
+        if (!isAttachedToWindow || windowVisibility != VISIBLE) return
+        val availableSpace = width - paddingLeft - paddingRight
+        if (availableSpace <= 0) return // not laid out yet: onSizeChanged() calls this again
+
+        val textWidth = textWidth()
+        if (textWidth <= availableSpace) return
+
+        // total distance of one cycle (one full text width + spacing)
+        scrollDistance = textWidth + spacing
+        scrollCycleMs = scrollSpeedPxPerSec?.let { speedPxPerSec ->
+            // speed = pixels/sec, clamped to sensible durations
+            ((scrollDistance / speedPxPerSec) * 1000f).toLong().coerceIn(2000L, 120_000L)
+        } ?: scrollDurationMs.coerceAtLeast(2000L)
+
+        scrollStartTime = SystemClock.uptimeMillis()
+        scrolling = true
+        postOnAnimation(scrollFrame)
+    }
+
+    companion object {
+        // Last loaded custom font (main thread only).
+        private var cachedFontKey: String? = null
+        private var cachedFont: Typeface? = null
+
+        /**
+         * Width in px of [text] drawn with the given style, using the same rules as the view
+         * (typefaceMode 0 = normal, 1 = bold, 2 = italic; a font file takes precedence).
+         */
+        fun measureText(context: Context, text: String, sizeSp: Float, typefaceMode: Int, ttfFile: File?): Float {
+            val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+            paint.textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, sizeSp, context.resources.displayMetrics)
+            paint.typeface = ttfFile?.takeIf { it.isFile }?.let { loadTypeface(it) }
+                ?: Typeface.create(Typeface.DEFAULT, styleOf(typefaceMode))
+            return paint.measureText(text)
+        }
+
+        private fun styleOf(mode: Int): Int = when (mode) {
+            1 -> Typeface.BOLD
+            2 -> Typeface.ITALIC
+            else -> Typeface.NORMAL
+        }
+
+        private fun loadTypeface(file: File): Typeface? {
+            val key = "${file.absolutePath}|${file.lastModified()}|${file.length()}"
+            if (key == cachedFontKey) return cachedFont
+            val typeface = try {
+                Typeface.createFromFile(file)
+            } catch (e: RuntimeException) {
+                null
+            }
+            cachedFontKey = key
+            cachedFont = typeface
+            return typeface
+        }
     }
 }

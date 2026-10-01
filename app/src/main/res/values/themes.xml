@@ -1,7 +1,11 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.DisplayMediaTitles" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="colorPrimary">"#D6C08A"</item>
+    <!-- Base application theme.
+         Light instead of DayNight: all layouts use fixed light backgrounds (#F8EECF, the white
+         color picker panel), so the dark variant only made check boxes, input hints and the "#"
+         label of the color picker (almost) invisible. In light mode nothing changes, because
+         DayNight is Light there. -->
+    <style name="Base.Theme.DisplayMediaTitles" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/primaryDark</item>
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowContentOverlay">@null</item>

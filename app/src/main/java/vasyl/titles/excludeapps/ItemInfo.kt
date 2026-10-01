@@ -24,19 +24,17 @@ open class ItemInfo {
 
     var dropPos: IntArray? = null
 
-    constructor()
-
     override fun toString(): String {
         return "Item(" +
-                "id=$id " +
-                "type=$itemType " +
-                "container=$container " +
-                "screen=$screenId " +
-                "cellX=$cellX " +
-                "cellY=$cellY " +
-                "spanX=$spanX " +
-                "spanY=$spanY " +
-                "dropPos=$dropPos" +
-                ")"
+            "id=$id " +
+            "type=$itemType " +
+            "container=$container " +
+            "screen=$screenId " +
+            "cellX=$cellX " +
+            "cellY=$cellY " +
+            "spanX=$spanX " +
+            "spanY=$spanY " +
+            "dropPos=${dropPos?.contentToString()}" + // printed the array reference before
+            ")"
     }
 }

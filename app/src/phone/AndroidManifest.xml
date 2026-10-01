@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Manifest overlay for the "phone" flavor (regular, non-system app).
+
+    It is merged on top of src/main/AndroidManifest.xml:
+     - android:sharedUserId="android.uid.system" is removed, so the APK can be installed like any other
+       app on phones and tablets,
+     - permissions that only the system UID / privileged apps can hold are dropped.
+     - storage permissions are dropped as well: fonts are imported through the system file picker
+       and the FYT player integration (the only user of file paths) does not exist on phones.
+    The overlay then uses TYPE_APPLICATION_OVERLAY (see Privileges.kt) and the user grants
+    "notification access", "display over other apps" and the battery exemption.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:remove="android:sharedUserId">
+
+    <uses-permission
+        android:name="android.permission.INTERACT_ACROSS_USERS"
+        tools:node="remove" />
+    <uses-permission
+        android:name="android.permission.MEDIA_CONTENT_CONTROL"
+        tools:node="remove" />
+    <uses-permission
+        android:name="android.permission.MODIFY_PHONE_STATE"
+        tools:node="remove" />
+    <uses-permission
+        android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+        tools:node="remove" />
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        tools:node="remove" />
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        tools:node="remove" />
+
+</manifest>

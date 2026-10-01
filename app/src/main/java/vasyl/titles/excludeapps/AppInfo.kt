@@ -12,33 +12,25 @@ class AppInfo : ItemInfo() {
     var intent: Intent? = null
 
     init {
-        flags = 0
         itemType = 1
     }
 
     override fun toString(): String {
         return "ApplicationInfo(" +
-                "title=${title.toString()} " +
-                "id=$id " +
-                "type=$itemType " +
-                "container=$container " +
-                "screen=$screenId " +
-                "cellX=$cellX " +
-                "cellY=$cellY " +
-                "spanX=$spanX " +
-                "spanY=$spanY " +
-                "dropPos=$dropPos" +
-                ")"
+            "title=$title " +
+            "id=$id " +
+            "type=$itemType " +
+            "container=$container " +
+            "screen=$screenId " +
+            "cellX=$cellX " +
+            "cellY=$cellY " +
+            "spanX=$spanX " +
+            "spanY=$spanY " +
+            "dropPos=${dropPos?.contentToString()}" +
+            ")"
     }
 
-    fun getPackageName(): String {
-        intent?.let { intent ->
-            var packageName = intent.getPackage()
-            if (packageName == null && intent.component != null) {
-                packageName = intent.component?.packageName
-            }
-            if (packageName != null) return packageName
-        }
-        return ""
-    }
+    /** Package of the launch intent, falling back to the component name; "" if unknown. */
+    fun getPackageName(): String =
+        intent?.`package` ?: intent?.component?.packageName ?: componentName?.packageName ?: ""
 }

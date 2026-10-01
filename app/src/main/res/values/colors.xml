@@ -3,8 +3,9 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="primaryDark">#D6C08A</color>
-    <color name="primaryLight">#F8EECF</color>   
-    <color name="transparent">#FFFFFF00</color>
+    <color name="primaryLight">#F8EECF</color>
+    <!-- Was #FFFFFF00, which is opaque yellow in #AARRGGBB notation. -->
+    <color name="transparent">#00FFFFFF</color>
     <color name="light_gray">#FFAAAAAA</color>
     <color name="colorAccent">#ff4285f4</color>
 
