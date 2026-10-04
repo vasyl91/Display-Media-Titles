@@ -515,8 +515,8 @@
                     android:padding="0dp"/>
 
                 <Button
-                    android:id="@+id/normal_outlined_button"
-                    android:text="@string/normal_outlined"
+                    android:id="@+id/ttf_button"
+                    android:text="@string/ttf"
                     android:textColor="@color/black"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -524,7 +524,7 @@
                     app:layout_constraintStart_toEndOf="@id/bold_button"
                     app:layout_constraintTop_toTopOf="@id/bold_button"
                     app:layout_constraintBottom_toBottomOf="@id/bold_button"
-                    android:onClick="normalOutlinedButton"
+                    android:onClick="ttfButton"
                     android:minWidth="0dp"
                     android:insetLeft="2dp"
                     android:insetRight="2dp"
@@ -532,17 +532,17 @@
                     android:padding="0dp"/>
 
                 <Button
-                    android:id="@+id/ttf_button"
-                    android:text="@string/ttf"
+                    android:id="@+id/normal_outlined_button"
+                    android:text="@string/normal_outlined"
                     android:textColor="@color/black"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     app:layout_constraintWidth_percent="0.20"
-                    app:layout_constraintStart_toEndOf="@id/normal_outlined_button"
-                    app:layout_constraintTop_toTopOf="@id/normal_outlined_button"
-                    app:layout_constraintBottom_toBottomOf="@id/normal_outlined_button"
+                    app:layout_constraintStart_toEndOf="@id/ttf_button"
+                    app:layout_constraintTop_toTopOf="@id/ttf_button"
+                    app:layout_constraintBottom_toBottomOf="@id/ttf_button"
                     app:layout_constraintEnd_toEndOf="parent"
-                    android:onClick="ttfButton"
+                    android:onClick="normalOutlinedButton"
                     android:minWidth="0dp"
                     android:insetLeft="2dp"
                     android:insetRight="2dp"

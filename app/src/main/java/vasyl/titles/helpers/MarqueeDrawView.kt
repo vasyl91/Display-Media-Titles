@@ -99,13 +99,12 @@ class MarqueeDrawView @JvmOverloads constructor(
 
     /**
      * Sets the "modeled" typeface:
-     * 0 => normal, 1 => bold, 2 => italic, 4 => normal with a black outline
+     * 0 => normal, 1 => bold, 2 => italic
      * This will be ignored if a custom TTF is loaded via setTypefaceFile(...)
      */
     fun setTypefaceMode(mode: Int) {
         // only apply built-in styles if no custom TTF is loaded
         if (tf != null) return
-        isOutlined = (mode == TYPEFACE_OUTLINED)
         applyTypeface(Typeface.create(Typeface.DEFAULT, styleOf(mode)))
         onTextMetricsChanged()
     }
@@ -117,9 +116,15 @@ class MarqueeDrawView @JvmOverloads constructor(
      */
     fun setTypefaceFile(file: File?) {
         tf = file?.takeIf { it.isFile }?.let { loadTypeface(it) }
-        isOutlined = false
         applyTypeface(tf ?: Typeface.create(Typeface.DEFAULT, Typeface.NORMAL))
         onTextMetricsChanged()
+    }
+
+    /** Adds a black outline to the text; works with every typeface, including a custom TTF. */
+    fun setOutlined(outlined: Boolean) {
+        if (isOutlined == outlined) return
+        isOutlined = outlined
+        invalidate()
     }
 
     private fun applyTypeface(type: Typeface) {
@@ -267,8 +272,6 @@ class MarqueeDrawView @JvmOverloads constructor(
     }
 
     companion object {
-        const val TYPEFACE_OUTLINED = 4
-
         // Last loaded custom font (main thread only).
         private var cachedFontKey: String? = null
         private var cachedFont: Typeface? = null

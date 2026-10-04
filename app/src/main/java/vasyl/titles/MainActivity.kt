@@ -67,7 +67,8 @@ class MainActivity : AppCompatActivity() {
         const val TYPEFACE_BOLD = 1
         const val TYPEFACE_ITALIC = 2
         const val TYPEFACE_TTF = 3
-        const val TYPEFACE_OUTLINED = 4
+        /** Outlined used to be a typeface of its own; it is now a separate option. */
+        const val LEGACY_TYPEFACE_OUTLINED = 4
 
         /** Font files often have no dedicated MIME type, therefore octet-stream is accepted too. */
         val FONT_MIME_TYPES = arrayOf(
@@ -164,6 +165,7 @@ class MainActivity : AppCompatActivity() {
     private var defaultBgColorG: Int = 255
     private var defaultBgColorB: Int = 255
     private var typeface: Int = TYPEFACE_NORMAL
+    private var outlined = false
     private var fytData: Int = 1
     private var statusButtonColor = DEFAULT_TEXT_COLOR
     private var statusBgButtonColor = "transparent"
@@ -247,6 +249,12 @@ class MainActivity : AppCompatActivity() {
         defaultBgColorG = settings.getInt("bg_green", 255)
         defaultBgColorB = settings.getInt("bg_blue", 255)
         typeface = settings.getInt("typeface", TYPEFACE_NORMAL)
+        outlined = settings.getBoolean("typeface_outlined", false)
+        if (typeface == LEGACY_TYPEFACE_OUTLINED) {
+            typeface = TYPEFACE_NORMAL
+            outlined = true
+            settings.edit { putInt("typeface", TYPEFACE_NORMAL).putBoolean("typeface_outlined", true) }
+        }
         fytData = settings.getInt("fytData", 1)
         autostart = settings.getBoolean("autostart", false)
         displayArtist = settings.getBoolean("artist_box", true)
@@ -903,7 +911,12 @@ class MainActivity : AppCompatActivity() {
 
     fun boldButton(v: View?) = selectBuiltInTypeface(TYPEFACE_BOLD)
 
-    fun normalOutlinedButton(v: View?) = selectBuiltInTypeface(TYPEFACE_OUTLINED)
+    fun normalOutlinedButton(v: View?) {
+        outlined = !outlined
+        settings.edit { putBoolean("typeface_outlined", outlined) }
+        highlightTypeface(typeface)
+        previewAppearance()
+    }
 
     private fun selectBuiltInTypeface(value: Int) {
         typeface = value
@@ -991,7 +1004,7 @@ class MainActivity : AppCompatActivity() {
             normal = if (value == TYPEFACE_NORMAL) Color.GREEN else buttonColor,
             italic = if (value == TYPEFACE_ITALIC) Color.GREEN else buttonColor,
             bold = if (value == TYPEFACE_BOLD) Color.GREEN else buttonColor,
-            outlined = if (value == TYPEFACE_OUTLINED) Color.GREEN else buttonColor,
+            outlined = if (outlined) Color.GREEN else buttonColor,
             ttf = if (value == TYPEFACE_TTF) Color.GREEN else buttonColor,
         )
     }

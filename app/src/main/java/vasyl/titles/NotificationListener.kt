@@ -80,6 +80,8 @@ import kotlin.math.roundToInt
 class NotificationListener : NotificationListenerService() {
 
     companion object {
+        /** Outlined used to be a typeface of its own (value 4); it is now a separate option. */
+        private const val LEGACY_TYPEFACE_OUTLINED = 4
         private const val TAG = "NotificationListener"
         private const val PREFS = "savedPrefs"
         private const val EXCLUDE_PREFS = "ExcludeAppsPrefs"
@@ -942,6 +944,12 @@ class NotificationListener : NotificationListenerService() {
         val down = prefs.getInt("down", 0)
         val size = prefs.getInt("size", 16)
         var typeface = prefs.getInt("typeface", 0)
+        var outlined = prefs.getBoolean("typeface_outlined", false)
+        if (typeface == LEGACY_TYPEFACE_OUTLINED) { // outlined used to be a typeface of its own
+            typeface = 0
+            outlined = true
+            prefs.edit { putInt("typeface", 0).putBoolean("typeface_outlined", true) }
+        }
         val ttfUp = prefs.getInt("ttf_up", 0)
         val ttfDown = prefs.getInt("ttf_down", 0)
 
@@ -973,6 +981,7 @@ class NotificationListener : NotificationListenerService() {
             },
             size = size,
             typeface = typeface,
+            outlined = outlined,
             ttfFile = ttfFile,
             ttfOffset = when {
                 ttfDown > 0 -> ttfDown.toFloat()
@@ -1004,7 +1013,7 @@ class NotificationListener : NotificationListenerService() {
 
         val spec = OverlaySpec(
             text, style.width, style.height, style.marginLeft, style.yOffset, overlayType, style.textColor,
-            style.bgColor, style.size, style.typeface, style.ttfFile?.path, style.ttfOffset, params.alpha
+            style.bgColor, style.size, style.typeface, style.outlined, style.ttfFile?.path, style.ttfOffset, params.alpha
         )
         if (overlayView != null && spec == overlaySpec) return true // exactly this is already on screen
         removeWindowView()
@@ -1021,6 +1030,7 @@ class NotificationListener : NotificationListenerService() {
                 setTypefaceFile(null)
                 setTypefaceMode(style.typeface)
             }
+            setOutlined(style.outlined)
             enableScroll(true)
             background = null
             alpha = 1f
@@ -1292,6 +1302,7 @@ class NotificationListener : NotificationListenerService() {
         val yOffset: Int,
         val size: Int,
         val typeface: Int,
+        val outlined: Boolean,
         val ttfFile: File?,
         val ttfOffset: Float,
         val textColor: Int,
@@ -1310,6 +1321,7 @@ class NotificationListener : NotificationListenerService() {
         val bgColor: Int,
         val textSize: Int,
         val typeface: Int,
+        val outlined: Boolean,
         val ttfPath: String?,
         val ttfOffset: Float,
         val alpha: Float,
