@@ -67,6 +67,7 @@ class MainActivity : AppCompatActivity() {
         const val TYPEFACE_BOLD = 1
         const val TYPEFACE_ITALIC = 2
         const val TYPEFACE_TTF = 3
+        const val TYPEFACE_OUTLINED = 4
 
         /** Font files often have no dedicated MIME type, therefore octet-stream is accepted too. */
         val FONT_MIME_TYPES = arrayOf(
@@ -115,6 +116,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var mNormalButton: Button
     private lateinit var mItalicButton: Button
     private lateinit var mBoldButton: Button
+    private lateinit var mNormalOutlinedButton: Button
     private lateinit var mTtfButton: Button
     private lateinit var mTtfUpButton: Button
     private lateinit var mTtfCenterButton: Button
@@ -315,6 +317,7 @@ class MainActivity : AppCompatActivity() {
         mNormalButton = findViewById(R.id.normal_button)
         mItalicButton = findViewById(R.id.italic_button)
         mBoldButton = findViewById(R.id.bold_button)
+        mNormalOutlinedButton = findViewById(R.id.normal_outlined_button)
         mTtfButton = findViewById(R.id.ttf_button)
         highlightTypeface(typeface)
 
@@ -900,6 +903,8 @@ class MainActivity : AppCompatActivity() {
 
     fun boldButton(v: View?) = selectBuiltInTypeface(TYPEFACE_BOLD)
 
+    fun normalOutlinedButton(v: View?) = selectBuiltInTypeface(TYPEFACE_OUTLINED)
+
     private fun selectBuiltInTypeface(value: Int) {
         typeface = value
         saveInt("typeface", value)
@@ -986,14 +991,16 @@ class MainActivity : AppCompatActivity() {
             normal = if (value == TYPEFACE_NORMAL) Color.GREEN else buttonColor,
             italic = if (value == TYPEFACE_ITALIC) Color.GREEN else buttonColor,
             bold = if (value == TYPEFACE_BOLD) Color.GREEN else buttonColor,
+            outlined = if (value == TYPEFACE_OUTLINED) Color.GREEN else buttonColor,
             ttf = if (value == TYPEFACE_TTF) Color.GREEN else buttonColor,
         )
     }
 
-    private fun typefaceButtons(normal: Int, italic: Int, bold: Int, ttf: Int) {
+    private fun typefaceButtons(normal: Int, italic: Int, bold: Int, outlined: Int, ttf: Int) {
         mNormalButton.setBackgroundColor(normal)
         mItalicButton.setBackgroundColor(italic)
         mBoldButton.setBackgroundColor(bold)
+        mNormalOutlinedButton.setBackgroundColor(outlined)
         mTtfButton.setBackgroundColor(ttf)
     }
 

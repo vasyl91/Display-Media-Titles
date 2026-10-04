@@ -27,6 +27,7 @@
     <string name="typeface">글꼴:</string>
     <string name="normal">일반</string>
     <string name="italic">기울임체</string>
+    <string name="normal_outlined">윤곽선</string>
     <string name="bold">굵게</string>
     <string name="ttf">TTF</string>
     <string name="ttf_position">TTF 높이:</string>

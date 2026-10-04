@@ -27,6 +27,12 @@ class MarqueeDrawView @JvmOverloads constructor(
 ) : View(context, attrs) {
 
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val strokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 5f
+        color = Color.BLACK
+    }
+    private var isOutlined = false
     private var tf: Typeface? = null
     private var text: String = ""
     private var offsetX = 0f
@@ -66,6 +72,7 @@ class MarqueeDrawView @JvmOverloads constructor(
             16f,
             resources.displayMetrics
         )
+        strokePaint.textSize = paint.textSize
         // ensure view itself has no background drawable that interferes
         background = null
     }
@@ -86,18 +93,20 @@ class MarqueeDrawView @JvmOverloads constructor(
             sizeSp,
             resources.displayMetrics
         )
+        strokePaint.textSize = paint.textSize
         onTextMetricsChanged()
     }
 
     /**
      * Sets the "modeled" typeface:
-     * 0 => normal, 1 => bold, 2 => italic
+     * 0 => normal, 1 => bold, 2 => italic, 4 => normal with a black outline
      * This will be ignored if a custom TTF is loaded via setTypefaceFile(...)
      */
     fun setTypefaceMode(mode: Int) {
         // only apply built-in styles if no custom TTF is loaded
         if (tf != null) return
-        paint.typeface = Typeface.create(Typeface.DEFAULT, styleOf(mode))
+        isOutlined = (mode == TYPEFACE_OUTLINED)
+        applyTypeface(Typeface.create(Typeface.DEFAULT, styleOf(mode)))
         onTextMetricsChanged()
     }
 
@@ -108,8 +117,14 @@ class MarqueeDrawView @JvmOverloads constructor(
      */
     fun setTypefaceFile(file: File?) {
         tf = file?.takeIf { it.isFile }?.let { loadTypeface(it) }
-        paint.typeface = tf ?: Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
+        isOutlined = false
+        applyTypeface(tf ?: Typeface.create(Typeface.DEFAULT, Typeface.NORMAL))
         onTextMetricsChanged()
+    }
+
+    private fun applyTypeface(type: Typeface) {
+        paint.typeface = type
+        strokePaint.typeface = type
     }
 
     /**
@@ -179,11 +194,13 @@ class MarqueeDrawView @JvmOverloads constructor(
 
         if (!scrolling || textWidth <= (width - paddingLeft - paddingRight)) {
             // not scrolling, draw at start
+            if (isOutlined) canvas.drawText(text, paddingLeft.toFloat(), centerY, strokePaint)
             canvas.drawText(text, paddingLeft.toFloat(), centerY, paint)
         } else {
             // scrolling - draw text repeatedly for continuous marquee
             var x = paddingLeft.toFloat() - offsetX
             while (x < width.toFloat()) {
+                if (isOutlined) canvas.drawText(text, x, centerY, strokePaint)
                 canvas.drawText(text, x, centerY, paint)
                 x += textWidth + spacing
             }
@@ -250,6 +267,8 @@ class MarqueeDrawView @JvmOverloads constructor(
     }
 
     companion object {
+        const val TYPEFACE_OUTLINED = 4
+
         // Last loaded custom font (main thread only).
         private var cachedFontKey: String? = null
         private var cachedFont: Typeface? = null
