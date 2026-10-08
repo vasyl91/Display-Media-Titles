@@ -47,9 +47,9 @@ android {
         minSdk = 26
         targetSdk = 36
         
-        val appVersionName = "1.1.2"
+        val appVersionName = "1.1.3"
         versionName = appVersionName
-        // 1.1.2 -> 10102; every release gets a higher versionCode automatically.
+        // 1.1.3 -> 10103; every release gets a higher versionCode automatically.
         // A higher versionCode in /oem/priv-app makes the system drop an older /data/app update.
         versionCode = appVersionName.split(".").map(String::toInt)
             .let { (major, minor, patch) -> major * 10_000 + minor * 100 + patch }
