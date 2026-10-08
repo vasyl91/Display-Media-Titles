@@ -1009,7 +1009,7 @@ class NotificationListener : NotificationListenerService() {
                 layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
             }
         }
-        Privileges.applyTouchPassThrough(this, params, privileged)
+        Privileges.applyOverlayTouchMode(this, params, privileged)
 
         val spec = OverlaySpec(
             text, style.width, style.height, style.marginLeft, style.yOffset, overlayType, style.textColor,

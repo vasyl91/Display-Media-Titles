@@ -53,19 +53,25 @@ object Privileges {
         }
 
     /**
-     * Makes a non-touchable overlay transparent for touches on Android 12+.
+     * Decides how a FLAG_NOT_TOUCHABLE overlay deals with touches on Android 12+.
      *
      * Since Android 12 touches that pass through an untrusted overlay are blocked when the overlay is
-     * more opaque than InputManager.maximumObscuringOpacityForTouch (0.8 by default). A privileged
-     * window can instead be flagged as trusted overlay (hidden API, reachable for the system UID); if
-     * that is not possible the window alpha is capped.
+     * more opaque than InputManager.maximumObscuringOpacityForTouch (0.8 by default), and the system
+     * itself lowers the alpha of an untrusted FLAG_NOT_TOUCHABLE overlay to that limit
+     * (DisplayPolicy.adjustWindowParamsLw). A privileged window can instead be flagged as trusted
+     * overlay (hidden API, reachable for the system UID); if that is not possible the window alpha
+     * is capped.
      *
-     * A non-privileged overlay (TYPE_APPLICATION_OVERLAY, "phone" flavor) is left fully opaque, the
-     * capped alpha made the titles visibly translucent. That window lies below the status bar, so
-     * the status bar stays touchable; only touches on an app right under the overlay are blocked.
+     * A non-privileged overlay (TYPE_APPLICATION_OVERLAY, "phone" flavor) can't be trusted, so it is
+     * made touchable to stay fully opaque: touches inside its rectangle no longer reach the app below.
+     * That window lies below the status bar, so the status bar itself stays touchable.
      */
-    fun applyTouchPassThrough(context: Context, params: WindowManager.LayoutParams, privileged: Boolean) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S || !privileged) return
+    fun applyOverlayTouchMode(context: Context, params: WindowManager.LayoutParams, privileged: Boolean) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
+        if (!privileged) {
+            params.flags = params.flags and WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE.inv()
+            return
+        }
         if (markTrustedOverlay(params)) return
         val maxOpacity = runCatching {
             context.getSystemService(InputManager::class.java)?.maximumObscuringOpacityForTouch
