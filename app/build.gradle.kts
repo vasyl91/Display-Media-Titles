@@ -7,8 +7,12 @@ plugins {
     alias(libs.plugins.dependency.analysis)
 }
 
-// Optional dedicated key for the "phone" flavor, see gradle.properties.
-val phoneStoreFile: String? = providers.gradleProperty("phoneStoreFile").orNull
+// Optional dedicated key for the "standard" flavor, see gradle.properties. The flavor was called
+// "phone" before, so the old property names (phoneStoreFile, ...) still work as a fallback.
+fun standardSigningProperty(name: String): String? =
+    providers.gradleProperty("standard$name").orElse(providers.gradleProperty("phone$name")).orNull
+
+val standardStoreFile: String? = standardSigningProperty("StoreFile")
 
 android {
     namespace = "vasyl.titles"
@@ -32,12 +36,12 @@ android {
             keyAlias = "android"
             keyPassword = "android"
         }
-        if (phoneStoreFile != null) {
-            create("phone") {
-                storeFile = file(phoneStoreFile)
-                storePassword = providers.gradleProperty("phoneStorePassword").orNull
-                keyAlias = providers.gradleProperty("phoneKeyAlias").orNull
-                keyPassword = providers.gradleProperty("phoneKeyPassword").orNull
+        if (standardStoreFile != null) {
+            create("standard") {
+                storeFile = file(standardStoreFile)
+                storePassword = standardSigningProperty("StorePassword")
+                keyAlias = standardSigningProperty("KeyAlias")
+                keyPassword = standardSigningProperty("KeyPassword")
             }
         }
     }
@@ -89,14 +93,17 @@ android {
             dimension = "default"
             applicationId = "cn.teyes.online"
         }
-        // Regular (non-system) app for phones and tablets. src/phone/AndroidManifest.xml removes
-        // android:sharedUserId and the permissions that only the system UID can hold.
-        create("phone") {
+        // Regular (non-system) app: phones, tablets and FYT units without the platform key (the
+        // FYT 7870). src/standard/AndroidManifest.xml removes android:sharedUserId and the
+        // permissions that only the system UID can hold. The flavor was called "phone" before; its
+        // package name stays vasyl.titles.phone, so installed copies update in place and other
+        // apps that wake it by that name (e.g. the FYT Launcher Mod) keep finding it.
+        create("standard") {
             dimension = "default"
             applicationId = "vasyl.titles.phone"
-            versionNameSuffix = "-phone"
+            versionNameSuffix = "-standard"
             buildConfigField("boolean", "SYSTEM_BUILD", "false")
-            signingConfig = signingConfigs.findByName("phone") ?: signingConfigs.getByName("platform")
+            signingConfig = signingConfigs.findByName("standard") ?: signingConfigs.getByName("platform")
         }
     }
 

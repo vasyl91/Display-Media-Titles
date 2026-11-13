@@ -22,7 +22,7 @@ import androidx.core.content.ContextCompat
  * Runtime detection of what the current build is allowed to do, plus permission checks shared by
  * [MainActivity] and [NotificationListener].
  *
- * The system flavors run as android.uid.system, the "phone" flavor is a regular app. Instead of
+ * The system flavors run as android.uid.system, the "standard" flavor is a regular app. Instead of
  * relying only on the flavor (BuildConfig.SYSTEM_BUILD) the checks look at the real process UID, so
  * a system flavor that was installed without the platform signature still degrades gracefully.
  */
@@ -62,7 +62,7 @@ object Privileges {
      * overlay (hidden API, reachable for the system UID); if that is not possible the window alpha
      * is capped.
      *
-     * A non-privileged overlay (TYPE_APPLICATION_OVERLAY, "phone" flavor) can't be trusted, so it is
+     * A non-privileged overlay (TYPE_APPLICATION_OVERLAY, "standard" flavor) can't be trusted, so it is
      * made touchable to stay fully opaque: touches inside its rectangle no longer reach the app below.
      * That window lies below the status bar, so the status bar itself stays touchable.
      */

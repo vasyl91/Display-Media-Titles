@@ -4,7 +4,7 @@
     Only user settings are kept: the settings, the excluded apps and the imported fonts (the font
     path preference points into files/fonts). Widget state (DataStore) and album cover files are
     transient and rebuilt on the next track, so they are left out.
-    Apps running with the system UID (FYT flavors) are never backed up by Android.
+    Apps running with the system UID (system flavors) are never backed up by Android.
 -->
 <data-extraction-rules>
     <cloud-backup>

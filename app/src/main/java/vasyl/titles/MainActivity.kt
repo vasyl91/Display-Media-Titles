@@ -178,7 +178,7 @@ class MainActivity : AppCompatActivity() {
     private var bgColorPicker: WeakReference<ColorPicker>? = null
     private var excludeAppsDialog: WeakReference<ExcludeAppsDialog>? = null
 
-    /** Storage access is only needed for the FYT integration, i.e. not by the "phone" flavor. */
+    /** Storage access is only needed for the FYT integration, i.e. not by the "standard" flavor. */
     private val storageRequired = BuildConfig.SYSTEM_BUILD
 
     private var flowStep: Step? = null

@@ -33,7 +33,7 @@ class WakeReceiver : BroadcastReceiver() {
         AppWaker.wake(context)
         if (AppWaker.isDisplayUiEnabled(context)) {
             Log.d(TAG, "Woken by broadcast, opening the settings screen")
-            // Allowed for the system UID. The "phone" flavor relies on "display over other apps"
+            // Allowed for the system UID. The "standard" flavor relies on "display over other apps"
             // (Android 15+ additionally requires a visible overlay window at that moment).
             AppWaker.openSettings(context)
         } else {

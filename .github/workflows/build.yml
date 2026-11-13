@@ -60,8 +60,8 @@ jobs:
       - name: Build (system flavor, debug)
         run: bash ./gradlew :app:assembleVasylTitlesDebug --stacktrace
 
-      - name: Build (phone flavor, debug)
-        run: bash ./gradlew :app:assemblePhoneDebug --stacktrace
+      - name: Build (standard flavor, debug)
+        run: bash ./gradlew :app:assembleStandardDebug --stacktrace
 
       - name: Upload the APKs
         uses: actions/upload-artifact@v4

@@ -18,12 +18,12 @@ App requires six permissions:
 
 Check this [tutorial](https://www.youtube.com/watch?v=H3tnNVyCJfk) in case you have a problem with Restricted Setting pop-up (for non-system apps).
 
-* Non-system app (works on phones, tablets and FYT):
+* Standard variant (non-system app; works on phones, tablets and FYT units, including those whose firmware is not signed with the platform key, such as the FYT 7870):
 
-	Download and install `display_media_titles_phone.apk` file. This version due to android restrictions will display titles only if the launcher has a fully transparent status bar, on FYT it might look like there's a shadow on it (it's probably hardcoded, the shadow persists regardless the launcher type/mod).
+	Download and install `display_media_titles_standard.apk` file (called `display_media_titles_phone.apk` up to version 1.1.2; the package name is still `vasyl.titles.phone`, so it installs as an update of the old file). This version due to android restrictions will display titles only if the launcher has a fully transparent status bar, on FYT it might look like there's a shadow on it (it's probably hardcoded, the shadow persists regardless the launcher type/mod).
 	User will be prompted to grant permissions mentioned before on the first start. 
 	
-* System app (exclusively for FYT 7862/8581):
+* System variant (uses system permissions to display the titles above the status bar; needs firmware signed with the platform key, e.g. FYT 7862/8581, so it cannot be installed on the FYT 7870):
 	
 	- FYT 7862/8581:
 

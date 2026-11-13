@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Manifest overlay for the "phone" flavor (regular, non-system app).
+    Manifest overlay for the "standard" flavor (regular, non-system app; it was called "phone").
 
     It is merged on top of src/main/AndroidManifest.xml:
      - android:sharedUserId="android.uid.system" is removed, so the APK can be installed like any other
-       app on phones and tablets,
+       app on phones, tablets and FYT units whose firmware is not signed with the platform key,
      - permissions that only the system UID / privileged apps can hold are dropped.
-     - storage permissions are dropped as well: fonts are imported through the system file picker
-       and the FYT player integration (the only user of file paths) does not exist on phones.
+     - storage permissions are dropped as well: fonts are imported through the system file picker.
+       Without storage access the tags of com.syu.music's files cannot be read, so that
+       integration is meant for the system flavors.
     The overlay then uses TYPE_APPLICATION_OVERLAY (see Privileges.kt) and the user grants
     "notification access", "display over other apps" and the battery exemption.
 -->

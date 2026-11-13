@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    System flavors run with the system UID. The "phone" flavor removes android:sharedUserId and the
-    system-only permissions in src/phone/AndroidManifest.xml.
+    System flavors run with the system UID. The "standard" flavor removes android:sharedUserId and the
+    system-only permissions in src/standard/AndroidManifest.xml.
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
