@@ -800,6 +800,78 @@
                     android:padding="0dp"/>
             </androidx.constraintlayout.widget.ConstraintLayout>
 
+            <!-- 18a) Use Shizuku / root (label + checkbox + summary + "Tap for details"). Shown
+                 only where Shizuku is installed or root is there (MainActivity); a tap on the text
+                 opens what it changes. -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/privileged_helper_row"
+                android:visibility="gone"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="6dp"
+                android:paddingBottom="6dp"
+                android:paddingStart="20dp"
+                android:paddingEnd="20dp">
+
+                <TextView
+                    android:id="@+id/privileged_helper_text"
+                    android:text="@string/privileged_helper"
+                    android:textColor="@color/black"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintWidth_percent="0.45"
+                    android:singleLine="true"
+                    android:includeFontPadding="false"
+                    android:padding="0dp"
+                    android:onClick="showPrivilegedHelperInfo"/>
+
+                <CheckBox
+                    android:id="@+id/privileged_helper_box"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintStart_toStartOf="@id/guideline_privileged_helper"
+                    app:layout_constraintEnd_toEndOf="@id/guideline_privileged_helper"
+                    app:layout_constraintTop_toTopOf="@id/privileged_helper_text"
+                    app:layout_constraintBottom_toBottomOf="@id/privileged_helper_text"
+                    android:onClick="setPrivilegedHelper"/>
+
+                <androidx.constraintlayout.widget.Guideline
+                    android:id="@+id/guideline_privileged_helper"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    app:layout_constraintGuide_percent="0.5" />
+
+                <TextView
+                    android:id="@+id/privileged_helper_summary"
+                    android:textColor="@color/black"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/privileged_helper_box"
+                    android:includeFontPadding="false"
+                    android:padding="0dp"
+                    android:onClick="showPrivilegedHelperInfo"/>
+
+                <TextView
+                    android:id="@+id/privileged_helper_details"
+                    android:text="@string/privileged_helper_details"
+                    android:textColor="@color/black"
+                    android:textStyle="italic"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/privileged_helper_summary"
+                    android:includeFontPadding="false"
+                    android:padding="0dp"
+                    android:onClick="showPrivilegedHelperInfo"/>
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
             <!-- 19) Display titles (label + checkbox) -->
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"

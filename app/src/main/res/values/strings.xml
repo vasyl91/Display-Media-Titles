@@ -85,4 +85,14 @@
     <string name="widget_description_small">Small music widget</string>
     <string name="app_list_dialog">Titles won\'t be displayed for the selected apps</string>
     <string name="app_filter_class" translatable="false"></string>
+
+    <!-- Use Shizuku / root (MainActivity, PrivilegedHelperInfoDialog) -->
+    <string name="privileged_helper">Use Shizuku / root:</string>
+    <string name="privileged_helper_summary_limit">Lifts a system-wide touch protection limit so that the title stays fully opaque. This may lower security.</string>
+    <string name="privileged_helper_summary_grants">Grants the permissions this app needs without the system settings.</string>
+    <string name="privileged_helper_details">Tap for details</string>
+    <string name="privileged_helper_info_title">Shizuku / root</string>
+    <string name="privileged_helper_info"><![CDATA[<b>What it does</b><br/>With this option on, the app uses Shizuku or root, whichever is available, where the system app uses its system permissions:<br/>• once: notification access, the battery optimisation exemption, display over other apps, all files access (for the tags and covers of local music files) and the right to write system settings (WRITE_SECURE_SETTINGS);<br/>• on Android 12 and newer, only while the title is on screen: the global setting <i>maximum_obscuring_opacity_for_touch</i> is raised from its default 0.8 to 1.<br/><br/><b>Why</b><br/>Android 12 and newer dim every window of another app that lets touches through it to 80 % of its opacity, so the title looks faded. Without this option the title is fully opaque, but touches on its area do not reach the app below it.<br/><br/><b>Security</b><br/>The limit applies to all apps: while it is raised, any app\'s overlay may be fully opaque and still pass your touches to the app below it. Android uses the limit against tapjacking (making you tap something hidden under an overlay), so this protection is weaker for every app during that time.<br/><br/><b>When it is restored</b><br/>3 s after the title disappears, when this option is turned off, and when the app\'s service stops. If the app is uninstalled while the limit is raised, it stays at 1: turn this option off before uninstalling, or restore it with<br/><tt>adb shell settings delete global maximum_obscuring_opacity_for_touch</tt><br/><br/>Shizuku has to be running and to allow this app (it asks the first time); root asks through its manager.]]></string>
+    <string name="privileged_helper_info_no_limit">This device runs Android 11 or older: the touch limit does not exist there, so no global setting is changed.</string>
+    <string name="privileged_helper_unavailable">Neither Shizuku nor root can be used right now.</string>
 </resources>

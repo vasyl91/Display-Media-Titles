@@ -60,4 +60,14 @@
     <string name="materialcolorpicker__inputColor">Kolor: </string>
     <string name="materialcolorpicker__btnSelectColor">Wybierz</string>
     <string name="materialcolorpicker__hash" translatable="false">#</string>
+
+    <!-- Use Shizuku / root (MainActivity, PrivilegedHelperInfoDialog) -->
+    <string name="privileged_helper">Użyj Shizuku / root:</string>
+    <string name="privileged_helper_summary_limit">Podnosi ogólnosystemowy limit ochrony dotyku, aby tytuł był w pełni nieprzezroczysty. Może to obniżyć bezpieczeństwo.</string>
+    <string name="privileged_helper_summary_grants">Nadaje uprawnienia potrzebne aplikacji bez ustawień systemu.</string>
+    <string name="privileged_helper_details">Dotknij, aby zobaczyć szczegóły</string>
+    <string name="privileged_helper_info_title">Shizuku / root</string>
+    <string name="privileged_helper_info"><![CDATA[<b>Co robi</b><br/>Gdy opcja jest włączona, aplikacja używa Shizuku albo roota (tego, co jest dostępne) tam, gdzie aplikacja systemowa korzysta z uprawnień systemowych:<br/>• jednorazowo: dostęp do powiadomień, wyjątek od optymalizacji baterii, wyświetlanie nad innymi aplikacjami, dostęp do wszystkich plików (tagi i okładki lokalnych plików muzycznych) oraz prawo zapisu ustawień systemu (WRITE_SECURE_SETTINGS);<br/>• na Androidzie 12 i nowszym, tylko gdy tytuł jest na ekranie: globalne ustawienie <i>maximum_obscuring_opacity_for_touch</i> jest podnoszone z domyślnych 0,8 do 1.<br/><br/><b>Dlaczego</b><br/>Android 12 i nowszy przyciemnia do 80 % krycia każde okno innej aplikacji, przez które przechodzi dotyk, więc tytuł wygląda na wyblakły. Bez tej opcji tytuł jest w pełni nieprzezroczysty, ale dotyk w jego obszarze nie trafia do aplikacji pod nim.<br/><br/><b>Bezpieczeństwo</b><br/>Limit dotyczy wszystkich aplikacji: gdy jest podniesiony, nakładka dowolnej aplikacji może być w pełni nieprzezroczysta i nadal przepuszczać dotyk do aplikacji pod nią. Android używa tego limitu przeciw tapjackingowi (nakłonieniu do dotknięcia czegoś ukrytego pod nakładką), więc w tym czasie ta ochrona jest słabsza dla każdej aplikacji.<br/><br/><b>Kiedy wraca</b><br/>3 s po zniknięciu tytułu, po wyłączeniu tej opcji i gdy usługa aplikacji się zatrzyma. Jeśli aplikacja zostanie odinstalowana przy podniesionym limicie, zostaje on na 1: wyłącz tę opcję przed odinstalowaniem albo przywróć go poleceniem<br/><tt>adb shell settings delete global maximum_obscuring_opacity_for_touch</tt><br/><br/>Shizuku musi działać i zezwolić tej aplikacji (zapyta za pierwszym razem); root pyta przez swój menedżer.]]></string>
+    <string name="privileged_helper_info_no_limit">To urządzenie ma Androida 11 lub starszego: nie ma tu limitu dotyku, więc żadne ustawienie globalne nie jest zmieniane.</string>
+    <string name="privileged_helper_unavailable">Nie można teraz użyć ani Shizuku, ani roota.</string>
 </resources>

@@ -50,6 +50,9 @@ object PrivilegedShell {
         return isShizukuInstalled(context.packageManager) || ShizukuHost.isRunning() || RootShell.isAvailable()
     }
 
+    /** A su binary exists. Blocking (file system). */
+    fun hasRootBlocking(): Boolean = RootShell.isAvailable()
+
     /** Shizuku runs and this app may use it. */
     fun hasShizuku(): Boolean = ShizukuHost.hasPermission()
 

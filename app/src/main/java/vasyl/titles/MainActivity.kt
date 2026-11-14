@@ -44,6 +44,8 @@ import vasyl.titles.colorpicker.ColorPicker
 import vasyl.titles.colorpicker.ColorPickerCallback
 import vasyl.titles.excludeapps.ExcludeAppsDialog
 import vasyl.titles.helpers.InputFilterMinMax
+import vasyl.titles.privileged.PrivilegedHelperInfoDialog
+import vasyl.titles.privileged.PrivilegedShell
 import vasyl.titles.receivers.PhoneListener
 import java.io.File
 import java.io.IOException
@@ -130,6 +132,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var mDisplayUI: CheckBox
     private lateinit var mAutostart: CheckBox
+    private lateinit var mPrivilegedHelper: CheckBox
     private lateinit var mDisplayArtist: CheckBox
     private lateinit var mDisplayTitles: CheckBox
     private lateinit var mExcludeForWidget: CheckBox
@@ -176,6 +179,7 @@ class MainActivity : AppCompatActivity() {
     private var colorPicker: WeakReference<ColorPicker>? = null
     private var bgColorPicker: WeakReference<ColorPicker>? = null
     private var excludeAppsDialog: WeakReference<ExcludeAppsDialog>? = null
+    private var privilegedHelperInfo: WeakReference<PrivilegedHelperInfoDialog>? = null
 
     /** Storage access is only needed for the FYT integration, i.e. not by the "standard" flavor. */
     private val storageRequired = BuildConfig.SYSTEM_BUILD
@@ -366,6 +370,19 @@ class MainActivity : AppCompatActivity() {
         mAutostart.isChecked = autostart
         findViewById<TextView>(R.id.autostart_app_summary).startMarquee()
 
+        // Use Shizuku / root: offered where Shizuku is installed or root is there
+        mPrivilegedHelper = findViewById(R.id.privileged_helper_box)
+        mPrivilegedHelper.isChecked = PrivilegedShell.isEnabled(this)
+        findViewById<TextView>(R.id.privileged_helper_summary).setText(
+            // The security warning only where the touch opacity limit exists (Android 12+).
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                R.string.privileged_helper_summary_limit
+            } else {
+                R.string.privileged_helper_summary_grants
+            }
+        )
+        updatePrivilegedHelperRow()
+
         // Display artist
         mDisplayArtist = findViewById(R.id.display_artist_box)
         mDisplayArtist.isChecked = displayArtist
@@ -405,6 +422,7 @@ class MainActivity : AppCompatActivity() {
         if (!uiReady) return
         // Replaces the 50 ms polling loop: permissions can only change while we are in the background.
         refreshPermissionButtons()
+        updatePrivilegedHelperRow() // Shizuku may have been installed or started meanwhile
         if (awaitingSettingsReturn) {
             awaitingSettingsReturn = false
             val step = flowStep
@@ -1095,6 +1113,47 @@ class MainActivity : AppCompatActivity() {
         settings.edit { putBoolean("autostart", autostart) }
     }
 
+    /**
+     * "Use Shizuku / root". Turned on, Shizuku is asked for its permission (its own dialog); where
+     * it cannot be used, root is. Neither available: the user is told, the setting stays as chosen.
+     */
+    fun setPrivilegedHelper(v: View?) {
+        val enabled = mPrivilegedHelper.isChecked
+        settings.edit { putBoolean(PrivilegedShell.PREF_ENABLED, enabled) }
+        if (!enabled) return
+        PrivilegedShell.requestShizukuPermission { granted ->
+            if (granted) {
+                onPrivilegedHelperReady()
+                return@requestShizukuPermission
+            }
+            lifecycleScope.launch {
+                val root = withContext(Dispatchers.IO) { PrivilegedShell.hasRootBlocking() }
+                if (root) onPrivilegedHelperReady() else showInfoToast(getString(R.string.privileged_helper_unavailable))
+            }
+        }
+    }
+
+    /** Shizuku or root may be used now. */
+    private fun onPrivilegedHelperReady() {
+        Log.i(TAG, "Shizuku / root turned on")
+    }
+
+    /** The setting's row is shown when it can be used, and always while it is on (to turn it off). */
+    private fun updatePrivilegedHelperRow() {
+        lifecycleScope.launch {
+            val offered = withContext(Dispatchers.IO) { PrivilegedShell.isOfferedBlocking(applicationContext) }
+            findViewById<View>(R.id.privileged_helper_row).visibility =
+                if (offered || mPrivilegedHelper.isChecked) View.VISIBLE else View.GONE
+        }
+    }
+
+    fun showPrivilegedHelperInfo(v: View?) {
+        if (privilegedHelperInfo?.get()?.isAdded == true || !canShowDialog()) return
+        val dialog = PrivilegedHelperInfoDialog()
+        privilegedHelperInfo = WeakReference(dialog)
+        dialog.show(supportFragmentManager, PrivilegedHelperInfoDialog.TAG)
+    }
+
     fun setDisplayArtist(v: View?) {
         displayArtist = mDisplayArtist.isChecked
         settings.edit { putBoolean("artist_box", displayArtist) }
@@ -1145,6 +1204,8 @@ class MainActivity : AppCompatActivity() {
         colorPicker = null
         bgColorPicker?.get()?.dismissSafely(executePending = false)
         bgColorPicker = null
+        privilegedHelperInfo?.get()?.dismissSafely(executePending = false)
+        privilegedHelperInfo = null
     }
 
     /** DialogFragment.show() throws after onSaveInstanceState. */

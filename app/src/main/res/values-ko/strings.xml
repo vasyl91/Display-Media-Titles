@@ -70,4 +70,14 @@
     <string name="widget_description">음악 위젯</string>
     <string name="app_list_dialog">선택된 앱의 제목은 표시되지 않습니다</string>
     <string name="app_filter_class" translatable="false"></string>
+
+    <!-- Use Shizuku / root (MainActivity, PrivilegedHelperInfoDialog) -->
+    <string name="privileged_helper">Shizuku / 루트 사용:</string>
+    <string name="privileged_helper_summary_limit">제목이 완전히 불투명하게 보이도록 시스템 전체의 터치 보호 한도를 높입니다. 보안이 약해질 수 있습니다.</string>
+    <string name="privileged_helper_summary_grants">시스템 설정 없이 이 앱에 필요한 권한을 부여합니다.</string>
+    <string name="privileged_helper_details">자세한 내용을 보려면 탭하세요</string>
+    <string name="privileged_helper_info_title">Shizuku / 루트</string>
+    <string name="privileged_helper_info"><![CDATA[<b>하는 일</b><br/>이 옵션을 켜면 앱은 시스템 앱이 시스템 권한을 사용하는 곳에서 Shizuku 또는 루트(사용 가능한 것)를 사용합니다:<br/>• 한 번: 알림 접근, 배터리 최적화 예외, 다른 앱 위에 표시, 모든 파일 접근(로컬 음악 파일의 태그와 커버용), 시스템 설정 쓰기 권한(WRITE_SECURE_SETTINGS);<br/>• Android 12 이상에서 제목이 화면에 있는 동안만: 전역 설정 <i>maximum_obscuring_opacity_for_touch</i>를 기본값 0.8에서 1로 높입니다.<br/><br/><b>이유</b><br/>Android 12 이상은 터치를 통과시키는 다른 앱의 모든 창을 불투명도 80 %로 어둡게 하므로 제목이 흐리게 보입니다. 이 옵션이 없으면 제목은 완전히 불투명하지만 그 영역의 터치가 아래 앱에 전달되지 않습니다.<br/><br/><b>보안</b><br/>이 한도는 모든 앱에 적용됩니다. 한도가 높아진 동안에는 어떤 앱의 오버레이든 완전히 불투명하면서도 터치를 아래 앱으로 통과시킬 수 있습니다. Android는 이 한도로 탭재킹(오버레이 아래에 숨겨진 것을 누르게 하는 것)을 막으므로, 그동안 모든 앱에서 이 보호가 약해집니다.<br/><br/><b>복원 시점</b><br/>제목이 사라지고 3초 후, 이 옵션을 끌 때, 앱의 서비스가 중지될 때입니다. 한도가 높아진 상태에서 앱을 제거하면 1로 남습니다. 제거하기 전에 이 옵션을 끄거나 다음 명령으로 복원하세요<br/><tt>adb shell settings delete global maximum_obscuring_opacity_for_touch</tt><br/><br/>Shizuku가 실행 중이고 이 앱을 허용해야 합니다(처음에 묻습니다). 루트는 관리자 앱을 통해 묻습니다.]]></string>
+    <string name="privileged_helper_info_no_limit">이 기기는 Android 11 이하입니다. 터치 한도가 없으므로 전역 설정을 변경하지 않습니다.</string>
+    <string name="privileged_helper_unavailable">지금은 Shizuku와 루트를 모두 사용할 수 없습니다.</string>
 </resources>
