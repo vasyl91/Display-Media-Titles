@@ -51,6 +51,8 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import vasyl.titles.excludeapps.AppScope
+import vasyl.titles.device.DeviceIdentity
+import vasyl.titles.fyt.Stock7870Source
 import vasyl.titles.fyt.StockText
 import vasyl.titles.fyt.SyuMediaProtocol
 import vasyl.titles.helpers.Helpers
@@ -195,6 +197,10 @@ class NotificationListener : NotificationListenerService() {
 
     // Overlay
     private var privileged = false
+
+    // FYT 7870 (by its chipset): its stock sources come through Stock7870Source
+    private var is7870 = false
+    private var relayIgnoredLogged = false
     private var overlayType = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
     private var statusBarHeight = 0
     private var overlayView: View? = null
@@ -283,6 +289,11 @@ class NotificationListener : NotificationListenerService() {
         registerCompatReceiver()
         newScope.launch { FytPlayerBus.events.collect { onFytEvent(it) } }
 
+        // The FYT 7870's stock sources (com.syu.media, BT, radio): read on that unit only, after the
+        // collector above runs and before the sessions are looked at (com.syu.media's is left out).
+        is7870 = DeviceIdentity.is7870()
+        if (is7870) Stock7870Source.start(applicationContext)
+
         checkActiveSessions()
         setDefaultStatus(DEFAULT_STATUS_DELAY_MS)
 
@@ -307,6 +318,8 @@ class NotificationListener : NotificationListenerService() {
 
     override fun onDestroy() {
         destroyed = true
+        // Not in disconnectInternal(), which also runs at the start of every connect.
+        Stock7870Source.stop()
         disconnectInternal()
         if (instanceRef?.get() === this) instanceRef = null
         super.onDestroy()
@@ -431,6 +444,7 @@ class NotificationListener : NotificationListenerService() {
 
     private fun onSessionsChanged(controllers: List<MediaController>?) {
         if (!connected || controllers.isNullOrEmpty()) return
+        mediaController?.let { if (isIgnoredSession(it)) detachController() }
         val candidate = pickController(controllers) ?: return
         val current = mediaController
         if (current != null && current.sessionToken == candidate.sessionToken) return
@@ -440,9 +454,32 @@ class NotificationListener : NotificationListenerService() {
         attachController(candidate)
     }
 
-    private fun pickController(controllers: List<MediaController>): MediaController? =
-        controllers.firstOrNull { playbackStateOf(it)?.state == PlaybackState.STATE_PLAYING }
-            ?: controllers.firstOrNull()
+    private fun pickController(controllers: List<MediaController>): MediaController? {
+        val candidates = controllers.filterNot(::isIgnoredSession)
+        return candidates.firstOrNull { playbackStateOf(it)?.state == PlaybackState.STATE_PLAYING }
+            ?: candidates.firstOrNull()
+    }
+
+    /**
+     * On the FYT 7870 com.syu.media's session has a play state but no metadata (it only takes media
+     * buttons); its track comes through Stock7870Source. Taken as the controller, its "playing"
+     * would make the controller the source on screen with nothing to show.
+     */
+    private fun isIgnoredSession(controller: MediaController): Boolean =
+        is7870 && controller.packageName == SyuMediaProtocol.PACKAGE
+
+    /**
+     * A launcher's relay on the FYT 7870 is a copy of what Stock7870Source reads directly (the
+     * unit has no com.syu.music), so it is left out there.
+     */
+    private fun ignoresRelay(): Boolean {
+        if (!is7870) return false
+        if (!relayIgnoredLogged) {
+            relayIgnoredLogged = true
+            Log.i(TAG, "FYT 7870: a launcher's titlesReceiver relay is ignored, the stock sources are read directly")
+        }
+        return true
+    }
 
     private fun attachController(controller: MediaController) {
         mediaController = controller
@@ -1430,7 +1467,8 @@ class NotificationListener : NotificationListenerService() {
         private val ref: WeakReference<NotificationListener>,
     ) : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            if (ref.get() == null) return
+            val service = ref.get() ?: return
+            if (service.ignoresRelay()) return
             when (intent.action) {
                 MusicService.TITLES_RECEIVER -> {
                     val extras = intent.extras ?: return

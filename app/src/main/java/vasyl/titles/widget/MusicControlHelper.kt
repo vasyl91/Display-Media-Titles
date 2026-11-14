@@ -10,6 +10,7 @@ import android.media.session.PlaybackState
 import android.provider.Settings
 import android.util.Log
 import androidx.core.net.toUri
+import vasyl.titles.FytPlayerBus
 import vasyl.titles.MusicService
 import vasyl.titles.NotificationListener
 
@@ -22,7 +23,7 @@ object MusicControlHelper {
     fun onPreviousClicked(context: Context) {
         if (NotificationListener.excludeForWidget) return
         when (NotificationListener.source) {
-            NotificationListener.SOURCE_FYT -> sendFytCommand(context, MusicService.PREVMUSIC)
+            NotificationListener.SOURCE_FYT -> if (!isStock7870()) sendFytCommand(context, MusicService.PREVMUSIC)
             NotificationListener.SOURCE_CONTROLLER -> withController(context) { it.transportControls.skipToPrevious() }
         }
     }
@@ -30,7 +31,7 @@ object MusicControlHelper {
     fun onPlayPauseClicked(context: Context) {
         if (NotificationListener.excludeForWidget) return
         when (NotificationListener.source) {
-            NotificationListener.SOURCE_FYT -> {
+            NotificationListener.SOURCE_FYT -> if (!isStock7870()) {
                 updateWidgetPlayState(context, !MusicService.state)
                 sendFytCommand(context, MusicService.PLAYPAUSEMUSIC)
             }
@@ -50,7 +51,7 @@ object MusicControlHelper {
     fun onNextClicked(context: Context) {
         if (NotificationListener.excludeForWidget) return
         when (NotificationListener.source) {
-            NotificationListener.SOURCE_FYT -> sendFytCommand(context, MusicService.NEXTMUSIC)
+            NotificationListener.SOURCE_FYT -> if (!isStock7870()) sendFytCommand(context, MusicService.NEXTMUSIC)
             NotificationListener.SOURCE_CONTROLLER -> withController(context) { it.transportControls.skipToNext() }
         }
     }
@@ -58,7 +59,7 @@ object MusicControlHelper {
     fun openPlayer(context: Context) {
         if (NotificationListener.excludeForWidget) return
         when (NotificationListener.source) {
-            NotificationListener.SOURCE_FYT -> openAppByPackageName(context, SYU_MUSIC)
+            NotificationListener.SOURCE_FYT -> if (!isStock7870()) openAppByPackageName(context, SYU_MUSIC)
 
             NotificationListener.SOURCE_CONTROLLER -> {
                 val pkg = NotificationListener.activeControllerPackage
@@ -72,6 +73,13 @@ object MusicControlHelper {
             }
         }
     }
+
+    /**
+     * The FYT 7870's stock sources (com.syu.media, BT, radio) are only read, never controlled: their
+     * buttons do nothing, and in particular the play / pause symbol is not flipped ahead of a state
+     * that will never come.
+     */
+    private fun isStock7870(): Boolean = FytPlayerBus.last.value?.origin?.is7870Stock == true
 
     fun openAppByPackageName(context: Context, packageName: String): Boolean {
         return try {

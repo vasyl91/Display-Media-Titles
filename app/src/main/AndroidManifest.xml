@@ -51,6 +51,9 @@
             <category android:name="android.intent.category.LAUNCHER" />
         </intent>
         <package android:name="com.syu.music" />
+        <!-- FYT 7870: its stock player and the MCU service, read for BT and the radio. -->
+        <package android:name="com.syu.media" />
+        <package android:name="com.syu.ms" />
     </queries>
 
     <!-- usesCleartextTraffic removed: the app has no INTERNET permission. -->
