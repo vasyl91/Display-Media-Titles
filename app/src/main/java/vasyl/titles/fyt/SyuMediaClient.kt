@@ -44,6 +44,8 @@ private class ParcelAdapter(private val parcel: Parcel) : ParcelReader {
  * - When the service goes away (disconnected, binding died) [Listener.onGone] says so: the caller
  *   removes what was shown, as nothing plays any more. A binding that died is made again after
  *   [REBIND_MS].
+ * - A read whose play state could not be had is no read: "not playing" would take the title off
+ *   a track that plays. It is tried again a second later if the player last played.
  * - After [stop] nothing is reported any more, late callbacks of the player included.
  */
 internal class SyuMediaClient(
@@ -68,6 +70,7 @@ internal class SyuMediaClient(
 
     // worker thread only
     private var player: IBinder? = null
+    private var lastPlaying = false
 
     /** Binds the service; any thread. */
     fun start() {
@@ -140,6 +143,7 @@ internal class SyuMediaClient(
         worker.removeCallbacks(tick)
         if (player == null) return
         player = null
+        lastPlaying = false
         if (!stopped) listener.onGone(kind)
     }
 
@@ -158,17 +162,27 @@ internal class SyuMediaClient(
                 reply.recycle()
             }
         }
-        val playing = readInt(p, SyuMediaProtocol.TX_IS_PLAYING) != 0
-        val progress = readInt(p, SyuMediaProtocol.TX_GET_PROGRESS).toLong()
+        val playingState = readInt(p, SyuMediaProtocol.TX_IS_PLAYING)
+        val progress = readInt(p, SyuMediaProtocol.TX_GET_PROGRESS) ?: 0
         if (player !== p || stopped) return // it went away during the calls
-        listener.onRead(SyuMediaRead(kind, song, playing, progress.coerceAtLeast(0), sampledAt))
+        if (playingState == null) {
+            if (lastPlaying) worker.postDelayed(tick, TICK_MS)
+            return
+        }
+        val playing = playingState != 0
+        lastPlaying = playing
+        listener.onRead(SyuMediaRead(kind, song, playing, progress.toLong().coerceAtLeast(0), sampledAt))
         if (playing) worker.postDelayed(tick, TICK_MS)
     }
 
-    private fun readInt(p: IBinder, code: Int): Int {
-        val reply = call(p, code, null) ?: return 0
+    /** The int an IPlayer call answers; null when the call failed. */
+    private fun readInt(p: IBinder, code: Int): Int? {
+        val reply = call(p, code, null) ?: return null
         return try {
             reply.readInt()
+        } catch (e: RuntimeException) {
+            Log.w(TAG, "$kind: unreadable answer to call $code: $e")
+            null
         } finally {
             reply.recycle()
         }
