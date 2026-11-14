@@ -86,7 +86,9 @@ Check this [tutorial](https://www.youtube.com/watch?v=H3tnNVyCJfk) in case you h
 	- FM / AM radio: the station's RDS name, otherwise its frequency,
 	- Bluetooth audio from the phone: title and artist, when the phone sends them.
 
-	Limitations: the app only reads these sources, so the widget's buttons do nothing for them. The covers of radio stations and of Bluetooth songs are not shown. The FYT 7870 is recognised by its chipset; other units keep working as before.
+	The widget's buttons control these sources: previous / play-pause / next for the music and internet radio players, the phone over BT and the radio (next / previous station of its list; play-pause switches the radio on and off). A tap on the widget opens the source's page in the stock media app; so does a button when the source is not running, as the app never starts one by itself. The title on the status bar only shows what plays.
+
+	Limitations: the covers of radio stations and of Bluetooth songs are not shown. The FYT 7870 is recognised by its chipset; other units keep working as before.
 
 ## Generating app in Android Studio
 
