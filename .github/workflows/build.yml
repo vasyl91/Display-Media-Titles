@@ -63,6 +63,12 @@ jobs:
       - name: Build (standard flavor, debug)
         run: bash ./gradlew :app:assembleStandardDebug --stacktrace
 
+      # R8 and lint-vital only run for release builds: this catches a missing -keep rule (classes
+      # created by reflection, such as a Shizuku UserService) before a release is made. The APK is
+      # signed with the repository's test key and not uploaded.
+      - name: Build (standard flavor, release with R8)
+        run: bash ./gradlew :app:assembleStandardRelease --stacktrace
+
       - name: Upload the APKs
         uses: actions/upload-artifact@v4
         with:
