@@ -51,6 +51,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import vasyl.titles.excludeapps.AppScope
+import vasyl.titles.fyt.SyuMediaProtocol
 import vasyl.titles.helpers.Helpers
 import vasyl.titles.helpers.MarqueeDrawView
 import vasyl.titles.receivers.PhoneListener
@@ -647,7 +648,9 @@ class NotificationListener : NotificationListenerService() {
     private fun pauseOtherPlayer() {
         val controller = mediaController ?: return
         if (currentState != PlaybackState.STATE_PLAYING) return
-        if (controller.packageName == FYT_PACKAGE) return
+        // com.syu.media's session only takes media buttons and has no metadata; it is never the
+        // "other" player.
+        if (controller.packageName == FYT_PACKAGE || controller.packageName == SyuMediaProtocol.PACKAGE) return
         try {
             controller.transportControls.pause()
         } catch (e: RuntimeException) {
@@ -1382,6 +1385,7 @@ class NotificationListener : NotificationListenerService() {
                             path = extras.getString(MusicService.PLAY_PATH).orEmpty(),
                             durationMs = extras.getLong(MusicService.PLAY_TOTALMINUTES, 0L),
                             positionMs = extras.getLong(MusicService.PLAY_CURMINUTES, 0L),
+                            origin = FytOrigin.LAUNCHER_RELAY,
                         )
                     )
                 }

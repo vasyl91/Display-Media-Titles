@@ -10,7 +10,42 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
-/** One update from the FYT music player (com.syu.music), as delivered to [MusicService]. */
+/** Where an update of the FYT stock sources comes from. */
+enum class FytOrigin {
+    /** com.syu.music (7862 / 8581), through [MusicService]. */
+    SYU_MUSIC,
+
+    /** A launcher's "titlesReceiver" broadcast: a copy of what the stock player sent it. */
+    LAUNCHER_RELAY,
+
+    /** com.syu.media's music player (7870). */
+    MEDIA_MUSIC,
+
+    /** com.syu.media's internet radio (7870). */
+    MEDIA_ONLINE,
+
+    /** BT audio from com.syu.ms (7870). */
+    MEDIA_BT,
+
+    /** FM / AM radio from com.syu.ms (7870). */
+    RADIO;
+
+    /**
+     * A stock source of the FYT 7870: its title and artist come with the update, and its path may
+     * be a stream, a key or a file this app cannot read, so no file has to be read for it.
+     */
+    val is7870Stock: Boolean
+        get() = this == MEDIA_MUSIC || this == MEDIA_ONLINE || this == MEDIA_BT || this == RADIO
+
+    companion object {
+        val STOCK_7870: Set<FytOrigin> = setOf(MEDIA_MUSIC, MEDIA_ONLINE, MEDIA_BT, RADIO)
+    }
+}
+
+/**
+ * One update from an FYT stock source: com.syu.music as delivered to [MusicService], or (on the
+ * FYT 7870) a com.syu.media player, BT audio or the radio.
+ */
 data class FytTrack(
     val playing: Boolean,
     val title: String,
@@ -19,13 +54,22 @@ data class FytTrack(
     val path: String,
     val durationMs: Long,
     val positionMs: Long,
+    val origin: FytOrigin = FytOrigin.SYU_MUSIC,
     val receivedAt: Long = SystemClock.elapsedRealtime(),
 ) {
-    /** Same player state; position and arrival time are ignored. */
+    /** Same player state; position, origin and arrival time are ignored. */
     fun sameState(other: FytTrack): Boolean =
         playing == other.playing && title == other.title && artist == other.artist &&
             album == other.album && path == other.path && durationMs == other.durationMs
 }
+
+/**
+ * Whether [next] repeats [previous]: the same state within [windowMs] after it. The window is
+ * measured with [FytTrack.receivedAt], which a source sets to the moment it read the player, so
+ * an update sent once a second is never taken for a repeat.
+ */
+internal fun isRepeatedUpdate(previous: FytTrack?, next: FytTrack, windowMs: Long): Boolean =
+    previous != null && previous.sameState(next) && next.receivedAt - previous.receivedAt in 0 until windowMs
 
 /**
  * In-process channel between [MusicService] (producer) and [NotificationListener] (consumer).
@@ -68,16 +112,19 @@ object FytPlayerBus {
     fun publish(track: FytTrack) {
         _last.value = track
         val duplicate = synchronized(this) {
-            val previous = lastEmitted
-            val isDuplicate = previous != null && previous.sameState(track) &&
-                track.receivedAt - previous.receivedAt in 0 until DUPLICATE_WINDOW_MS
+            val isDuplicate = isRepeatedUpdate(lastEmitted, track, DUPLICATE_WINDOW_MS)
             if (!isDuplicate) lastEmitted = track
             isDuplicate
         }
         if (!duplicate) _events.tryEmit(Event.Data(track))
     }
 
-    fun publishRemove() {
+    /**
+     * The source stopped. With [onlyFrom], nothing happens unless the last update came from one of
+     * these origins, so a source never removes what another one shows.
+     */
+    fun publishRemove(onlyFrom: Set<FytOrigin>? = null) {
+        if (onlyFrom != null && _last.value?.origin !in onlyFrom) return
         synchronized(this) { lastEmitted = null }
         _last.update { it?.copy(playing = false) }
         _events.tryEmit(Event.Remove)
