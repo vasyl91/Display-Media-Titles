@@ -21,6 +21,8 @@ coroutines = "1.11.0"
 flexbox = "3.0.0"
 leakcanary = "2.14"
 material = "1.14.0"
+# Shizuku: privileged shell for the standard flavor (same version as the FYT Launcher Mod)
+shizuku = "13.1.5"
 
 # Tests
 junit = "4.13.2"
@@ -49,6 +51,8 @@ androidx-work-runtime = { module = "androidx.work:work-runtime", version.ref = "
 
 # Other
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
+shizuku-api = { module = "dev.rikka.shizuku:api", version.ref = "shizuku" }
+shizuku-provider = { module = "dev.rikka.shizuku:provider", version.ref = "shizuku" }
 flexbox = { module = "com.google.android.flexbox:flexbox", version.ref = "flexbox" }
 material = { module = "com.google.android.material:material", version.ref = "material" }
 # leakcanary-android already brings leakcanary-android-core and the AndroidX object watcher.

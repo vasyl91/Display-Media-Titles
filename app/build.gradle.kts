@@ -184,6 +184,10 @@ dependencies {
     implementation(libs.androidx.window)
     implementation(libs.androidx.palette)
     implementation(libs.kotlinx.coroutines.android)
+    // Shizuku: the standard flavor's privileged shell (vasyl.titles.privileged). Compiled into every
+    // flavor; its provider is declared in src/standard only, and the system flavors never use it.
+    implementation(libs.shizuku.api)
+    implementation(libs.shizuku.provider)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
