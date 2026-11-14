@@ -16,6 +16,12 @@ class SyuMusicSilenceTest {
     }
 
     @Test
+    fun aTitleShownAgainFromAnOldUpdateGoesWithoutSound() {
+        // The listener reconnected and showed the last "playing" of 1000 again at 60_000.
+        assertEquals(Verdict.STOPPED, SyuMusicSilence.check(track(at = 1_000L), true, 60_000L, false))
+    }
+
+    @Test
     fun aPlayingReportAfterTheAudioChangeMeansItPlays() {
         // A new track (the player re-created its MediaPlayer) or another app's short sound.
         assertEquals(Verdict.PLAYING, SyuMusicSilence.check(track(at = 2_000L), true, 1_100L, false))

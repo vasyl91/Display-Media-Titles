@@ -11,7 +11,8 @@ package vasyl.titles
  * 13:06:03.891). What is left is the sound itself: com.syu.music plays through Android's audio,
  * and while it plays it reports "playing" about once a second.
  *
- * Rules, checked a while after Android's audio changed:
+ * Rules, checked a while after Android's audio changed and after its title was put on screen (a
+ * title shown again from an old update, after the listener reconnected, say):
  * - Only a com.syu.music track that the titles take as playing is watched. The FYT 7870's stock
  *   sources are not: the radio and BT sound is the MCU's, and com.syu.media reports its own state.
  * - A "playing" reported after the audio change means it plays: nothing is done.

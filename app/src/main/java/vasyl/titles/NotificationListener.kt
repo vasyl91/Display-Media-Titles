@@ -621,8 +621,8 @@ class NotificationListener : NotificationListenerService() {
 
     /**
      * com.syu.music may stop without the titles hearing "stopped" (Back in it, see
-     * [SyuMusicSilence]): after an audio change its track is taken as stopped once no sound is
-     * heard and it has not reported "playing" since.
+     * [SyuMusicSilence]): after an audio change, and whenever its title is put on screen, its track
+     * is taken as stopped once no sound is heard and it has not reported "playing" since.
      */
     private fun scheduleSilenceCheck() {
         val scope = scope ?: return
@@ -741,6 +741,9 @@ class NotificationListener : NotificationListenerService() {
             }
             updateWidgetPlayState(this, true)
             setStatus(MEDIA_SOURCE_FYT)
+            // Shown again from an old update (after a reconnect, say), com.syu.music may long have
+            // stopped: its sound tells (SyuMusicSilence).
+            if (!info.origin.is7870Stock) scheduleSilenceCheck()
         }
         if (!fytState && (fytSet || wasSet)) {
             fytSet = false
