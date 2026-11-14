@@ -12,6 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import vasyl.titles.device.DeviceIdentity
 import vasyl.titles.excludeapps.AppScope
 import vasyl.titles.fyt.StockText
 import vasyl.titles.widget.isMusicPlaying
@@ -60,6 +61,9 @@ class MusicService : Service() {
         @Volatile @JvmStatic var TOTALMINUTES: Long = 0
         @Volatile @JvmStatic var CURMINUTES: Long = 0
 
+        /** Main thread only. */
+        private var ignoredLogged = false
+
         /** Pending "player stopped" confirmation; only touched on the main thread. */
         private var pendingRemove: Job? = null
     }
@@ -70,7 +74,7 @@ class MusicService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == MUSICSERVICE) {
+        if (intent?.action == MUSICSERVICE && !ignoredOn7870()) {
             try {
                 handlePlayerUpdate(intent)
             } catch (e: RuntimeException) {
@@ -87,6 +91,20 @@ class MusicService : Service() {
     override fun onDestroy() {
         handler.removeCallbacks(idleStop)
         super.onDestroy()
+    }
+
+    /**
+     * The FYT 7870 has no com.syu.music: its stock sources are read by Stock7870Source. This
+     * service is exported, so whatever arrives here on that unit is not the stock player's and
+     * must not mix with them.
+     */
+    private fun ignoredOn7870(): Boolean {
+        if (!DeviceIdentity.is7870()) return false
+        if (!ignoredLogged) {
+            ignoredLogged = true
+            Log.i(TAG, "FYT 7870: launcher music updates are ignored, the stock sources are read directly")
+        }
+        return true
     }
 
     private fun handlePlayerUpdate(intent: Intent) {
