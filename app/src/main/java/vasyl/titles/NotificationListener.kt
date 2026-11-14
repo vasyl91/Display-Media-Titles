@@ -285,6 +285,10 @@ class NotificationListener : NotificationListenerService() {
         mediaSessionManager = getSystemService(MediaSessionManager::class.java)
         audioManager = getSystemService(AudioManager::class.java)
 
+        // The FYT state of an earlier connection may be stale (updates are dropped while
+        // disconnected); setDefaultStatus() below restores it from FytPlayerBus.last.
+        fytState = false
+        fytStartPending = false
         fytSet = false
         fytAllowed = true
         songPrev = null
