@@ -51,6 +51,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import vasyl.titles.excludeapps.AppScope
+import vasyl.titles.fyt.StockText
 import vasyl.titles.fyt.SyuMediaProtocol
 import vasyl.titles.helpers.Helpers
 import vasyl.titles.helpers.MarqueeDrawView
@@ -587,6 +588,9 @@ class NotificationListener : NotificationListenerService() {
     }
 
     private fun onFytData(track: FytTrack) {
+        // A 7870 stock source always sends its title; without one there is nothing to show, and
+        // the state must not change for it (com.syu.music's updates are checked by their path).
+        if (track.origin.is7870Stock && StockText.validTag(track.title) == null) return
         if (track.playing && !fytState) fytStartPending = true
         fytState = track.playing
         if (!track.playing) fytStartPending = false
@@ -612,7 +616,9 @@ class NotificationListener : NotificationListenerService() {
         // Within the handover window (fytAllowed == false) the start is dropped entirely.
         if (fytStartPending && fytState) {
             fytStartPending = false
-            if (fytAllowed) pauseOtherPlayer()
+            // Not for the 7870's stock sources: this app only reads them, and com.syu.media takes
+            // and gives up the audio focus by itself. A late "playing" must never pause an app.
+            if (fytAllowed && !info.origin.is7870Stock) pauseOtherPlayer()
         }
 
         // Another track than the one on screen -> it has to be applied again.
@@ -672,8 +678,12 @@ class NotificationListener : NotificationListenerService() {
         }
     }
 
-    /** Runs on [Dispatchers.IO]. Returns null when the file does not exist (same as before). */
+    /**
+     * Runs on [Dispatchers.IO]. Returns null when the file does not exist (same as before), except
+     * for the 7870's stock sources, see [resolveStockInfo].
+     */
     private fun resolveFytInfo(track: FytTrack): FytInfo? {
+        if (track.origin.is7870Stock) return resolveStockInfo(track)
         val file = File(track.path)
         if (!file.isFile) return null
 
@@ -699,6 +709,44 @@ class NotificationListener : NotificationListenerService() {
             fileName = fileName,
             durationMs = metadata.durationMs.takeIf { it > 0 } ?: track.durationMs,
             picture = metadata.picture,
+            origin = track.origin,
+            localFile = true,
+        )
+    }
+
+    /**
+     * A track of the FYT 7870's stock sources (com.syu.media, BT, radio), on [Dispatchers.IO]. Its
+     * title and artist are the source's own: nothing has to be read, and the path may be a stream,
+     * a key or a file this app is not allowed to read (the standard flavor has no storage access).
+     * Only a readable local file is opened, for its cover. For anything that is not a local file
+     * the "file name" is the title, so the "File name" setting shows the title for it.
+     */
+    private fun resolveStockInfo(track: FytTrack): FytInfo? {
+        val title = StockText.validTag(track.title) ?: return null
+        val local = StockText.isLocalFile(track.path)
+        val file = if (local) File(track.path).takeIf { it.isFile && it.canRead() } else null
+        val metadata = file?.let { f ->
+            val lastModified = f.lastModified()
+            val length = f.length()
+            val cached = fytMetadataCache
+            if (cached != null && cached.path == track.path && cached.lastModified == lastModified &&
+                cached.length == length
+            ) {
+                cached
+            } else {
+                readFytMetadata(f, lastModified, length).also { fytMetadataCache = it }
+            }
+        }
+        return FytInfo(
+            path = track.path,
+            title = title,
+            artist = StockText.validTag(track.artist).orEmpty(),
+            album = StockText.validTag(track.album).orEmpty(),
+            fileName = StockText.fileBaseName(track.path) ?: title,
+            durationMs = track.durationMs,
+            picture = metadata?.picture,
+            origin = track.origin,
+            localFile = local,
         )
     }
 
@@ -793,7 +841,8 @@ class NotificationListener : NotificationListenerService() {
 
     private fun buildFytContent(): StatusContent? {
         val info = fytInfo ?: return null
-        val byFileName = prefs.getInt("fytData", 1) == 2
+        // The file name only exists for a local file (a stream or a station has none).
+        val byFileName = prefs.getInt("fytData", 1) == 2 && info.localFile
         val songText = if (byFileName) info.fileName else info.title
         val artistText = when {
             byFileName -> ""
@@ -802,7 +851,8 @@ class NotificationListener : NotificationListenerService() {
         }
         return StatusContent(
             source = SOURCE_FYT,
-            packageName = FYT_PACKAGE,
+            // Excluded apps and the last player go by this package: com.syu.media on the 7870.
+            packageName = if (info.origin.is7870Stock) SyuMediaProtocol.PACKAGE else FYT_PACKAGE,
             song = songText,
             artist = artistText,
             totalMs = info.durationMs.takeIf { it > 0 } ?: fytTotalMinutes,
@@ -1101,6 +1151,7 @@ class NotificationListener : NotificationListenerService() {
     // ---------------------------------------------------------------------------------------------
 
     private fun loadFytCover(info: FytInfo): Bitmap? {
+        if (!info.localFile && info.picture == null) return null // a stream or a station: no file to read
         val bytes = info.picture
             ?: try {
                 Lrc().getId3Info(info.path).dataPic
@@ -1296,6 +1347,9 @@ class NotificationListener : NotificationListenerService() {
         val fileName: String,
         val durationMs: Long,
         val picture: ByteArray?,
+        val origin: FytOrigin,
+        /** Whether [path] is a file of this device (always for com.syu.music). */
+        val localFile: Boolean,
     )
 
     private class OverlayStyle(
