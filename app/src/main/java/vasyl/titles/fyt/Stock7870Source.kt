@@ -116,6 +116,20 @@ object Stock7870Source {
             when (origin) {
                 FytOrigin.MEDIA_MUSIC -> music.control(action, onResult)
                 FytOrigin.MEDIA_ONLINE -> online.control(action, onResult)
+                FytOrigin.RADIO, FytOrigin.MEDIA_BT -> {
+                    val posted = worker.post {
+                        val commands = if (origin == FytOrigin.RADIO) {
+                            StockControls.radioCommands(action, arbiter.channel)
+                        } else {
+                            StockControls.btCommands(action, arbiter.channel)
+                        }
+                        // Nothing to do (next on a radio that is off) is no failure: nothing opens.
+                        val sent = commands.all { ms.cmd(it.module, it.code, it.ints) }
+                        Log.d(TAG, "$origin: $action on channel ${arbiter.channel} -> $commands ${if (sent) "sent" else "failed"}")
+                        onResult(sent)
+                    }
+                    if (!posted) onResult(false)
+                }
                 else -> onResult(false)
             }
         }

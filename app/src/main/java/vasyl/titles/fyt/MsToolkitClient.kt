@@ -25,6 +25,7 @@ import android.util.Log
  * - When com.syu.ms goes away [Listener.onGone] says so; the binding connects again by itself. A
  *   binding that died is made again after [REBIND_MS]. A SecurityException (not bindable by this
  *   app) ends the attempts: BT and the radio are not available then.
+ * - [cmd] sends a command of a widget button (see [StockControls]); it says whether it went out.
  * - After [stop] nothing is reported any more.
  */
 internal class MsToolkitClient(
@@ -70,6 +71,18 @@ internal class MsToolkitClient(
         worker.post {
             val remote = remotes[module] ?: return@post
             for (code in codesOf(module)) register(remote, module, code)
+        }
+    }
+
+    /** IRemoteModule.cmd(code, ints, null, null), one-way. Worker thread only. */
+    fun cmd(module: Int, code: Int, ints: List<Int>): Boolean {
+        if (stopped) return false
+        val remote = remotes[module] ?: return false
+        return oneWay(remote, MsProtocol.TX_CMD) {
+            writeInt(code)
+            writeIntArray(ints.toIntArray())
+            writeFloatArray(null)
+            writeStringArray(null)
         }
     }
 
@@ -171,16 +184,18 @@ internal class MsToolkitClient(
         }
     }
 
-    private inline fun oneWay(remote: IBinder, code: Int, write: Parcel.() -> Unit) {
+    private inline fun oneWay(remote: IBinder, code: Int, write: Parcel.() -> Unit): Boolean {
         val data = Parcel.obtain()
-        try {
+        return try {
             data.writeInterfaceToken(MsProtocol.IMODULE)
             data.write()
             remote.transact(code, data, null, IBinder.FLAG_ONEWAY)
         } catch (e: RemoteException) {
             Log.w(TAG, "call $code failed: $e")
+            false
         } catch (e: RuntimeException) {
             Log.w(TAG, "call $code failed: $e")
+            false
         } finally {
             data.recycle()
         }

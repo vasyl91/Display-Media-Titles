@@ -26,6 +26,9 @@ object MsProtocol {
     const val ICALLBACK = "com.syu.ipc.IModuleCallback"
 
     const val TX_GET_REMOTE_MODULE = 1
+
+    /** IRemoteModule.cmd(code, int[], float[], String[]), one-way: a command to the MCU module. */
+    const val TX_CMD = 1
     const val TX_GET = 2
     const val TX_REGISTER = 3
     const val TX_UNREGISTER = 4
@@ -51,6 +54,19 @@ object MsProtocol {
 
     /** BT module: the phone's play state, ints[0] == 1 while it plays. */
     const val BT_PLAY_STATE = 13
+
+    /** Main module command: switch the MCU's sound channel to ints[0]. */
+    const val CMD_MAIN_APP_ID = 0
+
+    /** Radio module commands: the next / previous station of the list (not a seek). */
+    const val CMD_RADIO_NEXT = 0
+    const val CMD_RADIO_PREV = 1
+
+    /** BT module commands (com.syu.ms FinalBt: C_BTAV_PREV, NEXT, PLAYPAUSE, PLAY). */
+    const val CMD_BT_PREV = 0
+    const val CMD_BT_NEXT = 1
+    const val CMD_BT_PLAY_PAUSE = 2
+    const val CMD_BT_PLAY = 27
 
     /** Sound channels (app ids) of the MCU, as the FYT 7870 uses them. */
     const val CH_NONE = 0
