@@ -59,6 +59,7 @@ import vasyl.titles.fyt.SyuMediaProtocol
 import vasyl.titles.helpers.Helpers
 import vasyl.titles.helpers.MarqueeDrawView
 import vasyl.titles.receivers.PhoneListener
+import vasyl.titles.widget.FolderCover
 import vasyl.titles.widget.Lrc
 import vasyl.titles.widget.updateWidgetFromService
 import vasyl.titles.widget.updateWidgetPlayState
@@ -1321,7 +1322,38 @@ class NotificationListener : NotificationListenerService() {
                 Log.w(TAG, "ID3 cover parsing failed for ${info.path}", e)
                 null
             }
-        return bytes?.takeIf { it.isNotEmpty() }?.let { decodeSampled(it, COVER_MAX_PX) }
+        val embedded = bytes?.takeIf { it.isNotEmpty() }?.let { decodeSampled(it, COVER_MAX_PX) }
+        return embedded ?: loadFolderCover(info.path)
+    }
+
+    /** Folder of the last [loadFolderCover], its modification time and the picture chosen (IO). */
+    @Volatile private var folderCoverCache: Triple<String, Long, File?>? = null
+
+    /**
+     * The folder's picture ([FolderCover]) for a local file without a cover of its own, on
+     * [Dispatchers.IO]. The choice is kept per folder until the folder changes.
+     */
+    private fun loadFolderCover(path: String): Bitmap? {
+        if (!StockText.isLocalFile(path)) return null
+        val dir = File(path).parentFile ?: return null
+        val modified = dir.lastModified()
+        val cached = folderCoverCache
+        val picture = if (cached != null && cached.first == dir.path && cached.second == modified) {
+            cached.third
+        } else {
+            val names = dir.list()?.toList().orEmpty()
+            FolderCover.pick(names)?.let { File(dir, it) }.also {
+                folderCoverCache = Triple(dir.path, modified, it)
+            }
+        }
+        val file = picture?.takeIf { it.isFile && it.canRead() && it.length() in 1..FolderCover.MAX_BYTES }
+            ?: return null
+        return try {
+            decodeSampled(file.readBytes(), COVER_MAX_PX)
+        } catch (e: IOException) {
+            Log.w(TAG, "Cannot read the folder picture ${file.path}", e)
+            null
+        }
     }
 
     private fun loadControllerCover(metadata: MediaMetadata, packageName: String): Bitmap? {
