@@ -7,9 +7,10 @@
        app on phones, tablets and FYT units whose firmware is not signed with the platform key,
      - permissions that only the system UID / privileged apps can hold are dropped (none is left
        in src/main since the unused ones were removed there),
-     - storage permissions are dropped as well: fonts are imported through the system file picker.
-       Without storage access the tags of com.syu.music's files cannot be read, so that
-       integration is meant for the system flavors.
+     - the runtime storage permissions are dropped as well: fonts are imported through the system
+       file picker. MANAGE_EXTERNAL_STORAGE (all files access) stays declared but is never asked
+       for: only "Use Shizuku / root" grants it (PrivilegedGrants), and with it the tags and
+       covers of local music files (com.syu.music, com.syu.media) can be read.
     The overlay then uses TYPE_APPLICATION_OVERLAY (see Privileges.kt) and the user grants
     "notification access", "display over other apps" and the battery exemption.
 -->
@@ -17,9 +18,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:remove="android:sharedUserId">
 
-    <uses-permission
-        android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
-        tools:node="remove" />
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         tools:node="remove" />

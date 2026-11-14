@@ -174,18 +174,30 @@ object Privileges {
 
         if (!grantedViaApi) {
             // Android 8.0 has no such method: write the secure setting directly (WRITE_SECURE_SETTINGS).
-            runCatching {
-                val resolver = context.contentResolver
-                val flat = component.flattenToString()
-                val current = Settings.Secure.getString(resolver, ENABLED_NOTIFICATION_LISTENERS).orEmpty()
-                if (current.split(':').none { it == flat }) {
-                    val updated = if (current.isBlank()) flat else "$current:$flat"
-                    Settings.Secure.putString(resolver, ENABLED_NOTIFICATION_LISTENERS, updated)
-                }
-            }.onFailure { Log.w(TAG, "Writing $ENABLED_NOTIFICATION_LISTENERS failed", it) }
+            addListenerToSecureSetting(context)
         }
         return isNotificationListenerEnabled(context)
     }
+
+    /**
+     * Adds our listener to Settings.Secure "enabled_notification_listeners". Needs
+     * WRITE_SECURE_SETTINGS: the system UID, or the standard flavor after Shizuku / root granted it.
+     */
+    fun addListenerToSecureSetting(context: Context) {
+        runCatching {
+            val resolver = context.contentResolver
+            val flat = notificationListenerComponent(context).flattenToString()
+            val current = Settings.Secure.getString(resolver, ENABLED_NOTIFICATION_LISTENERS).orEmpty()
+            if (current.split(':').none { it == flat }) {
+                val updated = if (current.isBlank()) flat else "$current:$flat"
+                Settings.Secure.putString(resolver, ENABLED_NOTIFICATION_LISTENERS, updated)
+            }
+        }.onFailure { Log.w(TAG, "Writing $ENABLED_NOTIFICATION_LISTENERS failed", it) }
+    }
+
+    /** WRITE_SECURE_SETTINGS is held (system UID, or granted through Shizuku / root). */
+    fun canWriteSecureSettings(context: Context): Boolean =
+        isSystemUid || isGranted(context, "android.permission.WRITE_SECURE_SETTINGS")
 
     /**
      * Adds the app to the Doze power-save whitelist without user interaction (system UID only).

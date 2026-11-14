@@ -3,6 +3,7 @@ package vasyl.titles
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import vasyl.titles.privileged.PrivilegedGrants
 import vasyl.titles.receivers.PhoneListener
 
 /**
@@ -25,6 +26,8 @@ object AppWaker {
         val app = context.applicationContext
         // With the system UID this grants notification access if it is missing (no-op otherwise).
         Privileges.tryGrantNotificationListenerAccess(app)
+        // The standard flavor with "Use Shizuku / root" on: the same through Shizuku or root.
+        PrivilegedGrants.grantMissing(app)
         PhoneListener.register(app)
         // Rebinds the listener if the system did not connect it (e.g. after a reboot). This replaces
         // requestRebind(), which only undoes requestUnbind() and therefore changed nothing here.

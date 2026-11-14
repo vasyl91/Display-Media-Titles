@@ -44,6 +44,7 @@ import vasyl.titles.colorpicker.ColorPicker
 import vasyl.titles.colorpicker.ColorPickerCallback
 import vasyl.titles.excludeapps.ExcludeAppsDialog
 import vasyl.titles.helpers.InputFilterMinMax
+import vasyl.titles.privileged.PrivilegedGrants
 import vasyl.titles.privileged.PrivilegedHelperInfoDialog
 import vasyl.titles.privileged.PrivilegedShell
 import vasyl.titles.receivers.PhoneListener
@@ -480,7 +481,13 @@ class MainActivity : AppCompatActivity() {
     // ---------------------------------------------------------------------------------------------
 
     private fun startPermissionFlow() {
-        runStep(Step.RUNTIME)
+        // With "Use Shizuku / root" on, what it can grant is granted first; the steps that are
+        // satisfied then are skipped, the rest opens the settings screens as before.
+        if (PrivilegedShell.isEnabled(this)) {
+            PrivilegedGrants.grantMissing(this) { if (!isFinishing && !isDestroyed) runStep(Step.RUNTIME) }
+        } else {
+            runStep(Step.RUNTIME)
+        }
     }
 
     private fun advance(from: Step) {
@@ -1133,9 +1140,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /** Shizuku or root may be used now. */
+    /** Shizuku or root may be used now: what is still missing is granted through it. */
     private fun onPrivilegedHelperReady() {
         Log.i(TAG, "Shizuku / root turned on")
+        PrivilegedGrants.grantMissing(this) { if (!isFinishing) refreshPermissionButtons() }
     }
 
     /** The setting's row is shown when it can be used, and always while it is on (to turn it off). */
