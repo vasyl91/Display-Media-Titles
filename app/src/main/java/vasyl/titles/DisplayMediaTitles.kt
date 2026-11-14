@@ -16,6 +16,7 @@ import vasyl.titles.excludeapps.AllAppsList
 import vasyl.titles.excludeapps.AppFilter
 import vasyl.titles.excludeapps.AppInfo
 import vasyl.titles.excludeapps.AppScope
+import vasyl.titles.privileged.PrivilegedShell
 
 class DisplayMediaTitles : Application() {
 
@@ -41,6 +42,8 @@ class DisplayMediaTitles : Application() {
         // Whatever started the process (boot, widget, FYT player, launcher): if the notification
         // listener is not connected by then, its binding is repaired (see ListenerGuard).
         ListenerGuard.check(this, LISTENER_CHECK_DELAY_MS)
+        // Shizuku's listeners (standard flavor); nothing is asked for or bound here.
+        PrivilegedShell.init(this)
     }
 
     /** Running app list load; main thread only. */

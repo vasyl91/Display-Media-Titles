@@ -27,6 +27,10 @@
 -keep class * extends androidx.glance.appwidget.GlanceAppWidgetReceiver { <init>(); }
 -keep class * implements androidx.glance.appwidget.action.ActionCallback { <init>(); }
 
+# Shizuku creates its UserService (vasyl.titles.privileged.DmtShellService) by name, with a
+# (Context) or a no-arg constructor, in a process of its own.
+-keep class vasyl.titles.privileged.DmtShellService { <init>(...); *; }
+
 # AppFilter.loadByName() instantiates the class named in R.string.app_filter_class via reflection.
 # Keeps every AppFilter implementation (in any package) with its name and no-arg constructor.
 -keep class * extends vasyl.titles.excludeapps.AppFilter { <init>(); }
