@@ -83,6 +83,10 @@ import kotlin.math.roundToInt
  *    music and internet radio, BT audio and the radio. They take the FYT player's place, and
  *    com.syu.media's own session (no metadata) is left out.
  *
+ * Which of them is shown: [TitleArbiter] decides for the FYT player, [PlaybackStates] says what a
+ * session's state means; only what plays is shown. In the standard flavor with "Use Shizuku /
+ * root" on, [vasyl.titles.privileged.OverlayAlpha] keeps the title fully opaque while touches pass.
+ *
  * Threading: everything that touches state or windows runs on the main thread. File access, bitmap
  * decoding and scaling run on [Dispatchers.IO] inside [scope], which only lives between
  * [onListenerConnected] and [onListenerDisconnected]; nothing can fire after a disconnect anymore.

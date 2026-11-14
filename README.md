@@ -23,6 +23,12 @@ Check this [tutorial](https://www.youtube.com/watch?v=H3tnNVyCJfk) in case you h
 
 	Download and install `display_media_titles_standard.apk` file (called `display_media_titles_phone.apk` up to version 1.1.2; the package name is still `vasyl.titles.phone`, so it installs as an update of the old file). This version due to android restrictions will display titles only if the launcher has a fully transparent status bar, on FYT it might look like there's a shadow on it (it's probably hardcoded, the shadow persists regardless the launcher type/mod).
 	User will be prompted to grant permissions mentioned before on the first start. 
+
+	**Shizuku / root (optional).** Where [Shizuku](https://github.com/RikkaApps/Shizuku) (any build, e.g. Shizuku Next) is installed or the device is rooted, the settings show "Use Shizuku / root:" below "Start on boot:". It is off by default; tap its text for the full details. Turned on, the app uses Shizuku (or root) where the system variant uses its system permissions:
+	- it grants notification access (also past Android 13's "restricted setting"), the battery optimisation exemption, display over other apps, all files access (so the tags and covers of local music files can be read) and WRITE_SECURE_SETTINGS;
+	- on Android 12 and newer, while a title is on screen, it raises the global setting `maximum_obscuring_opacity_for_touch` from 0.8 to 1, so the title is fully opaque and touches on it still reach the app below. **This lowers a protection against tapjacking for every app while the title is shown.** The value goes back 3 s after the title disappears, when the option is turned off and when the app's service stops. An uninstall while it is raised leaves it at 1: turn the option off first, or restore it with `adb shell settings delete global maximum_obscuring_opacity_for_touch`.
+
+	Neither Shizuku nor root can put the title above the status bar: that needs a system window type, which only the system variant has.
 	
 * System variant (uses system permissions to display the titles above the status bar; needs firmware signed with the platform key, e.g. FYT 7862/8581, so it cannot be installed on the FYT 7870):
 	
