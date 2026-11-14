@@ -111,7 +111,7 @@ class NotificationListener : NotificationListenerService() {
         private const val CONFIG_CHANGE_DELAY_MS = 500L
         private const val RECONNECT_CHECK_DELAY_MS = 15_000L
         private const val FYT_BLOCK_AFTER_CONTROLLER_MS = 2_500L
-        private const val WATCHDOG_ACTIVE_MS = 700L
+        private const val WATCHDOG_ACTIVE_MS = 2_000L
         private const val WATCHDOG_IDLE_MS = 2_000L
         private const val SESSION_CHECK_DEBOUNCE_MS = 250L
         private const val SESSION_RECHECK_MS = 1_000L
@@ -643,6 +643,9 @@ class NotificationListener : NotificationListenerService() {
                 val musicActive = audioManager?.isMusicActive == true
                 // Players that start while another session is paused do not always trigger
                 // onActiveSessionsChanged; the FYT player sometimes makes us lose the session.
+                // Starts are mostly seen by the audio playback callback (scheduleSessionCheck);
+                // this only catches what it misses, so every 2 s is enough while music plays (it
+                // was 700 ms, about 1.4 session lists a second for as long as the FYT player played).
                 if (musicActive && !PhoneListener.CALLING && (overlayView == null || fytState)) {
                     checkActiveSessions()
                 }
