@@ -547,11 +547,11 @@ class NotificationListener : NotificationListenerService() {
     private fun onControllerPlaybackStateChanged(state: PlaybackState?) {
         val newState = state?.state
         currentState = newState
-        when (newState) {
-            PlaybackState.STATE_PAUSED,
-            PlaybackState.STATE_STOPPED,
-            PlaybackState.STATE_BUFFERING -> {
-                prevState = newState
+        val kind = PlaybackStates.classify(newState)
+        when {
+            // ERROR and NONE are new here: a stream that lost its connection kept its title.
+            kind == PlaybackStates.Kind.STOPPED || newState == PlaybackState.STATE_BUFFERING -> {
+                prevState = newState ?: PlaybackState.STATE_NONE
                 Helpers.counter = 0
                 if (!fytState) {
                     hideTitle()
@@ -559,10 +559,12 @@ class NotificationListener : NotificationListenerService() {
                 }
             }
 
-            PlaybackState.STATE_PLAYING -> {
+            kind == PlaybackStates.Kind.PLAYING -> {
                 set()
                 updateWidgetPlayState(this, true)
             }
+
+            else -> Unit
         }
     }
 
@@ -578,10 +580,8 @@ class NotificationListener : NotificationListenerService() {
                 // Keep the previous title if the new metadata has none (prevents flickering).
                 metadata.titleOrNull()?.let { songCur = it }
 
-                val changed = songCur != songPrev ||
-                    prevState == PlaybackState.STATE_STOPPED ||
-                    prevState == PlaybackState.STATE_PAUSED ||
-                    prevState == PlaybackState.STATE_BUFFERING
+                // After any state that took the title off (paused, stopped, error, buffering).
+                val changed = songCur != songPrev || prevState != PlaybackState.STATE_PLAYING
                 if (!changed) return
 
                 songPrev = songCur
