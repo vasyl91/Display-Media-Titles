@@ -27,6 +27,8 @@ import vasyl.titles.FytTrack
  * - A track is published when it changed, and once a second while it plays: after another app had
  *   the screen, the titles take an FYT source back only from its repeated "playing".
  * - Everything runs on one thread of its own; the bus is fed on the main thread.
+ * - [control] sends a widget button to the source whose track the widget shows; nothing is started
+ *   without a press, and a source that is not running is not brought up.
  *
  * [start] and [stop] are called on the main thread; a new [start] after [stop] starts afresh.
  */
@@ -36,6 +38,7 @@ object Stock7870Source {
     private const val DEBOUNCE_MS = 300L
     private const val REPEAT_MS = 1000L
 
+    @Volatile
     private var run: Run? = null
 
     /** Starts reading the 7870's stock sources; a no-op while it runs. Main thread. */
@@ -48,6 +51,20 @@ object Stock7870Source {
     fun stop() {
         run?.stop()
         run = null
+    }
+
+    /**
+     * Sends a widget button to the source of [origin]. [onResult] says whether it reached the
+     * source; false when it does not run or cannot be reached (the caller opens its page then).
+     * Any thread; [onResult] may come on another one.
+     */
+    fun control(origin: FytOrigin, action: StockAction, onResult: (Boolean) -> Unit) {
+        val current = run
+        if (current == null) {
+            onResult(false)
+            return
+        }
+        current.control(origin, action, onResult)
     }
 
     private class Run(private val app: Context) {
@@ -93,6 +110,14 @@ object Stock7870Source {
                 }
             }
             thread.quitSafely()
+        }
+
+        fun control(origin: FytOrigin, action: StockAction, onResult: (Boolean) -> Unit) {
+            when (origin) {
+                FytOrigin.MEDIA_MUSIC -> music.control(action, onResult)
+                FytOrigin.MEDIA_ONLINE -> online.control(action, onResult)
+                else -> onResult(false)
+            }
         }
 
         private fun client(kind: StockKind): SyuMediaClient? = when (kind) {

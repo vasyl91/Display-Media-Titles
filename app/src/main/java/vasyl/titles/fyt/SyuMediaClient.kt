@@ -46,6 +46,8 @@ private class ParcelAdapter(private val parcel: Parcel) : ParcelReader {
  *   [REBIND_MS].
  * - A read whose play state could not be had is no read: "not playing" would take the title off
  *   a track that plays. It is tried again a second later if the player last played.
+ * - [control] sends a widget button to the player (see [StockControls]); without a connection it
+ *   does nothing and says so. The player is read again right after.
  * - After [stop] nothing is reported any more, late callbacks of the player included.
  */
 internal class SyuMediaClient(
@@ -90,6 +92,38 @@ internal class SyuMediaClient(
             player = null
             call(p, SyuMediaProtocol.TX_UNREGISTER_CALLBACK, callback)?.recycle()
         }
+    }
+
+    /**
+     * Sends [action] to the player; [onResult] (on the worker thread) says whether it went out.
+     * Any thread.
+     */
+    fun control(action: StockAction, onResult: (Boolean) -> Unit) {
+        if (stopped) {
+            onResult(false)
+            return
+        }
+        val posted = worker.post {
+            val p = player
+            if (p == null || stopped) {
+                onResult(false)
+                return@post
+            }
+            val playing = if (action == StockAction.PLAY_PAUSE) {
+                readInt(p, SyuMediaProtocol.TX_IS_PLAYING) ?: run {
+                    onResult(false)
+                    return@post
+                }
+            } else {
+                0
+            }
+            val tx = StockControls.playerTransaction(action, playing != 0)
+            val sent = call(p, tx, null)?.let { it.recycle(); true } == true
+            Log.d(TAG, "$kind: $action -> call $tx ${if (sent) "sent" else "failed"}")
+            onResult(sent)
+            refresh()
+        }
+        if (!posted) onResult(false) // the worker has been quit
     }
 
     /** Reads the player again, e.g. when it became the source shown. Any thread. */

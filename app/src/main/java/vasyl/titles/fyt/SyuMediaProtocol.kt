@@ -22,6 +22,18 @@ object SyuMediaProtocol {
     const val IPLAYER = "com.syu.media.IPlayer"
     const val ICALLBACK = "com.syu.media.ICallback"
 
+    /** play(): plays the current track; on a track that plays it starts it again. */
+    const val TX_PLAY = 1
+
+    /** playLast(): the previous track. */
+    const val TX_PLAY_LAST = 5
+
+    /** playNext(): the next track. */
+    const val TX_PLAY_NEXT = 6
+
+    /** pause(). */
+    const val TX_PAUSE = 7
+
     /** isPlaying() -> int 0 / 1. */
     const val TX_IS_PLAYING = 8
 
