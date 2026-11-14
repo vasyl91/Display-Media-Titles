@@ -33,6 +33,7 @@ import android.media.session.PlaybackState
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.service.notification.NotificationListenerService
 import android.util.Log
 import android.view.Gravity
@@ -114,6 +115,9 @@ class NotificationListener : NotificationListenerService() {
         private const val WATCHDOG_IDLE_MS = 2_000L
         private const val SESSION_CHECK_DEBOUNCE_MS = 250L
         private const val SESSION_RECHECK_MS = 1_000L
+        /** Between the checks of [SyuMusicSilence], and how many follow one audio change. */
+        private const val SILENCE_CHECK_MS = 1_500L
+        private const val SILENCE_CHECKS = 4
         private const val COVER_MAX_PX = 512
         private const val FALLBACK_ICON_PX = 256
         private const val COVER_CORNER_RATIO = 0.07f
@@ -244,6 +248,7 @@ class NotificationListener : NotificationListenerService() {
     private var defaultStatusJob: Job? = null
     private var fytAllowedJob: Job? = null
     private var sessionCheckJob: Job? = null
+    private var silenceCheckJob: Job? = null
     private var coverJob: Job? = null
     private var fytResolveJob: Job? = null
 
@@ -343,6 +348,7 @@ class NotificationListener : NotificationListenerService() {
         defaultStatusJob = null
         fytAllowedJob = null
         sessionCheckJob = null
+        silenceCheckJob = null
         coverJob = null
         fytResolveJob = null
         fytAllowed = true
@@ -599,6 +605,43 @@ class NotificationListener : NotificationListenerService() {
                     checkActiveSessions()
                 }
                 delay(if (musicActive) WATCHDOG_ACTIVE_MS else WATCHDOG_IDLE_MS)
+            }
+        }
+    }
+
+    /** Android's audio changed: a player started, paused or stopped. */
+    private fun onAudioPlaybackChanged() {
+        scheduleSessionCheck()
+        scheduleSilenceCheck()
+    }
+
+    /**
+     * com.syu.music may stop without the titles hearing "stopped" (Back in it, see
+     * [SyuMusicSilence]): after an audio change its track is taken as stopped once no sound is
+     * heard and it has not reported "playing" since.
+     */
+    private fun scheduleSilenceCheck() {
+        val scope = scope ?: return
+        silenceCheckJob?.cancel()
+        if (!fytState) {
+            silenceCheckJob = null
+            return
+        }
+        val changedAt = SystemClock.elapsedRealtime()
+        silenceCheckJob = scope.launch {
+            repeat(SILENCE_CHECKS) {
+                delay(SILENCE_CHECK_MS)
+                val last = FytPlayerBus.last.value
+                val musicActive = audioManager?.isMusicActive == true
+                when (SyuMusicSilence.check(last, fytState, changedAt, musicActive)) {
+                    SyuMusicSilence.Verdict.WAIT -> Unit
+                    SyuMusicSilence.Verdict.STOPPED -> {
+                        Log.i(TAG, "com.syu.music fell silent without saying it stopped: '${last?.title}' removed")
+                        FytPlayerBus.publishRemove(SyuMusicSilence.ORIGINS)
+                        return@launch
+                    }
+                    else -> return@launch
+                }
             }
         }
     }
@@ -1481,7 +1524,7 @@ class NotificationListener : NotificationListenerService() {
         private val ref: WeakReference<NotificationListener>,
     ) : AudioManager.AudioPlaybackCallback() {
         override fun onPlaybackConfigChanged(configs: MutableList<AudioPlaybackConfiguration>?) {
-            ref.get()?.scheduleSessionCheck()
+            ref.get()?.onAudioPlaybackChanged()
         }
     }
 
