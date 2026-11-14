@@ -36,9 +36,8 @@ class DisplayMediaTitles : Application() {
     override fun onCreate() {
         super.onCreate()
         instance = this
-        // Loading labels and icons of every launcher app took hundreds of milliseconds on the main
-        // thread and delayed every component of the process (listener, widgets, MusicService).
-        setAllAppsAsync()
+        // The launcher apps (labels and icons) are only needed by the exclude dialog, which loads
+        // them when it opens; loading them at every process start cost time and memory at boot.
         // Whatever started the process (boot, widget, FYT player, launcher): if the notification
         // listener is not connected by then, its binding is repaired (see ListenerGuard).
         ListenerGuard.check(this, LISTENER_CHECK_DELAY_MS)

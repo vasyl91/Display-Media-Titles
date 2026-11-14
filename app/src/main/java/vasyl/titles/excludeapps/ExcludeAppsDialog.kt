@@ -88,11 +88,12 @@ class ExcludeAppsDialog : DialogFragment(), AdapterView.OnItemClickListener {
         dialog?.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
         dialog?.setCanceledOnTouchOutside(true)
 
-        // Launcher apps are loaded in the background at startup: show them as soon as they arrive.
+        // The launcher apps are loaded in the background when the dialog opens (a load that runs is
+        // reused), so apps installed or removed since are up to date; shown as soon as they arrive.
         viewLifecycleOwner.lifecycleScope.launch {
             AllAppsList.apps.collect { list -> mAdapter?.submit(list) }
         }
-        if (AllAppsList.apps.value.isEmpty()) DisplayMediaTitles.getInstance().setAllAppsAsync()
+        DisplayMediaTitles.getInstance().setAllAppsAsync()
     }
 
     override fun onItemClick(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
