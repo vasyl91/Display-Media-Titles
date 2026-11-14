@@ -51,7 +51,6 @@
 
     <string name="permissions">Wymagane uprawnienia:</string>
     <string name="read_phone_state">Informacje o telefonie</string>
-    <string name="outgoing_calls">Rejestr połączeń</string>
     <string name="notification_listener">Dostęp do powiadomień</string>
     <string name="battery_optimization">Optymalizacja baterii</string>
     <string name="draw_over_apps">Wyświetlanie nad aplikacjami</string>

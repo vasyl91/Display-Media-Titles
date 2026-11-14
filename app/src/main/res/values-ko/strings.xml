@@ -57,7 +57,6 @@
 
     <string name="permissions">필요한 권한들:</string>
     <string name="read_phone_state">휴대전화 상태 읽기</string>
-    <string name="outgoing_calls">통화 기록 읽기</string>
     <string name="notification_listener">알림 접근 허용</string>
     <string name="battery_optimization">배터리 최적화</string>
     <string name="draw_over_apps">다른 앱 위에 표시</string>

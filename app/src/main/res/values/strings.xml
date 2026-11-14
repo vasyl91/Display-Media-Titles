@@ -71,7 +71,6 @@
 
     <string name="permissions">Required permissions:</string>
     <string name="read_phone_state">Read phone state</string>
-    <string name="outgoing_calls">Call logs</string>
     <string name="notification_listener">Notification listener</string>
     <string name="battery_optimization">Battery optimization</string>
     <string name="draw_over_apps">Draw over other apps</string>

@@ -136,7 +136,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var mExcludeForWidgetSummary: TextView
 
     private lateinit var mPhoneStateButton: Button
-    private lateinit var mOutgoingCalls: Button
     private lateinit var mBatteryButton: Button
     private lateinit var mNotificationButton: Button
     private lateinit var mDrawOverAppsButton: Button
@@ -383,7 +382,6 @@ class MainActivity : AppCompatActivity() {
 
         // Required permissions' buttons
         mPhoneStateButton = findViewById(R.id.read_phone_state_button)
-        mOutgoingCalls = findViewById(R.id.outgoing_calls_button)
         mBatteryButton = findViewById(R.id.battery_optimization_button)
         mNotificationButton = findViewById(R.id.notification_listener_button)
         mDrawOverAppsButton = findViewById(R.id.draw_over_apps_button)
@@ -523,7 +521,6 @@ class MainActivity : AppCompatActivity() {
 
     private fun requiredRuntimePermissions(): List<String> = buildList {
         add(Manifest.permission.READ_PHONE_STATE)
-        add(Manifest.permission.READ_CALL_LOG)
         if (storageRequired) addAll(Privileges.legacyStoragePermissions())
     }
 
@@ -595,7 +592,6 @@ class MainActivity : AppCompatActivity() {
     private fun refreshPermissionButtons() {
         if (!uiReady) return
         setPermissionButton(mPhoneStateButton, Privileges.isGranted(this, Manifest.permission.READ_PHONE_STATE))
-        setPermissionButton(mOutgoingCalls, Privileges.isGranted(this, Manifest.permission.READ_CALL_LOG))
         setPermissionButton(mBatteryButton, Privileges.isIgnoringBatteryOptimizations(this))
         setPermissionButton(mNotificationButton, Privileges.isNotificationListenerEnabled(this))
         setPermissionButton(mDrawOverAppsButton, Privileges.canDrawOverlays(this))
@@ -623,10 +619,6 @@ class MainActivity : AppCompatActivity() {
 
     fun phoneStateButton(v: View?) {
         requestSinglePermission(Manifest.permission.READ_PHONE_STATE)
-    }
-
-    fun outgoingCallsButton(v: View?) {
-        requestSinglePermission(Manifest.permission.READ_CALL_LOG)
     }
 
     fun batteryButton(v: View?) {

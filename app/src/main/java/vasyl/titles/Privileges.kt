@@ -115,7 +115,6 @@ object Privileges {
         isIgnoringBatteryOptimizations(context) &&
             canDrawOverlays(context) &&
             isGranted(context, Manifest.permission.READ_PHONE_STATE) &&
-            isGranted(context, Manifest.permission.READ_CALL_LOG) &&
             isNotificationListenerEnabled(context) &&
             (!storageRequired || isStorageAccessGranted(context))
 

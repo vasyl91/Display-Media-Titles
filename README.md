@@ -8,13 +8,14 @@ It also supports original FYT player - see the `Displaying media titles from sto
 
 ## Installation
 
-App requires six permissions:
+App requires five permissions:
 * Notification access to be able to read media metadata.
 * Display over other apps to properly display titles.
 * Battery optimization to keep service alive.
 * Phone state to properly remove view on phone calls.
-* Call logs to open app with the dialer's "secret code".
 * Storage to use the file picker and .ttf fonts.
+
+The call log permission is not needed any more: the dialer's "secret code" reaches the app without it.
 
 Check this [tutorial](https://www.youtube.com/watch?v=H3tnNVyCJfk) in case you have a problem with Restricted Setting pop-up (for non-system apps).
 

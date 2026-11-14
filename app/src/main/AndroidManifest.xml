@@ -22,7 +22,6 @@
     <uses-permission android:name="android.permission.MODIFY_PHONE_STATE"
         tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <uses-permission android:name="android.permission.READ_CALL_LOG" />
     <!-- Runtime storage permissions only exist up to Android 12L / 10; newer versions use
          MANAGE_EXTERNAL_STORAGE (all files access). -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
