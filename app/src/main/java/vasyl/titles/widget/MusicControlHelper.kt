@@ -10,9 +10,12 @@ import android.media.session.PlaybackState
 import android.provider.Settings
 import android.util.Log
 import androidx.core.net.toUri
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import vasyl.titles.FytPlayerBus
 import vasyl.titles.MusicService
 import vasyl.titles.NotificationListener
+import vasyl.titles.excludeapps.AppScope
 
 /** Handles the widget buttons. Every system call is guarded: a widget click must never crash the app. */
 object MusicControlHelper {
@@ -32,18 +35,16 @@ object MusicControlHelper {
         if (NotificationListener.excludeForWidget) return
         when (NotificationListener.source) {
             NotificationListener.SOURCE_FYT -> if (!isStock7870()) {
-                updateWidgetPlayState(context, !MusicService.state)
+                // The state the titles got from the player: MusicService.state only knows the
+                // player's own updates, not the launcher's relay, and was always "not playing" then.
+                showPressed(context, fytPlaying(), ::fytPlaying)
                 sendFytCommand(context, MusicService.PLAYPAUSEMUSIC)
             }
 
             NotificationListener.SOURCE_CONTROLLER -> withController(context) { controller ->
-                if (controller.playbackState?.state == PlaybackState.STATE_PLAYING) {
-                    updateWidgetPlayState(context, false)
-                    controller.transportControls.pause()
-                } else {
-                    updateWidgetPlayState(context, true)
-                    controller.transportControls.play()
-                }
+                val playing = controller.playbackState?.state == PlaybackState.STATE_PLAYING
+                showPressed(context, playing) { controllerPlaying(context) }
+                if (playing) controller.transportControls.pause() else controller.transportControls.play()
             }
         }
     }
@@ -72,6 +73,27 @@ object MusicControlHelper {
                 if (!lastController.isNullOrEmpty()) openAppByPackageName(context, lastController)
             }
         }
+    }
+
+    private val hold = PlayPauseHold()
+
+    /** The opposite symbol at once, the player's real state [PlayPauseHold.HOLD_MS] later. */
+    private fun showPressed(context: Context, playingAtPress: Boolean, actual: () -> Boolean) {
+        val app = context.applicationContext
+        val token = hold.press()
+        updateWidgetPlayState(app, PlayPauseHold.symbolAfterPress(playingAtPress))
+        AppScope.launch {
+            delay(PlayPauseHold.HOLD_MS)
+            if (hold.isLatest(token)) updateWidgetPlayState(app, actual())
+        }
+    }
+
+    private fun fytPlaying(): Boolean = FytPlayerBus.last.value?.playing == true
+
+    private fun controllerPlaying(context: Context): Boolean {
+        var playing = false
+        withController(context) { playing = it.playbackState?.state == PlaybackState.STATE_PLAYING }
+        return playing
     }
 
     /**
