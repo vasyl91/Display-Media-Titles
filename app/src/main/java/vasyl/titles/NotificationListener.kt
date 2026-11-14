@@ -621,6 +621,10 @@ class NotificationListener : NotificationListenerService() {
             if (fytAllowed && !info.origin.is7870Stock) pauseOtherPlayer()
         }
 
+        // What is applied now, before another track resets it: one update that brings another track
+        // and "paused" together (the end of a playlist) must still hide the title on screen.
+        val wasSet = fytSet
+
         // Another track than the one on screen -> it has to be applied again.
         if (song != info.title && song != info.fileName) fytSet = false
 
@@ -632,7 +636,7 @@ class NotificationListener : NotificationListenerService() {
             updateWidgetPlayState(this, true)
             setStatus(MEDIA_SOURCE_FYT)
         }
-        if (!fytState && fytSet) {
+        if (!fytState && (fytSet || wasSet)) {
             fytSet = false
             if (currentState != PlaybackState.STATE_PLAYING) {
                 hideTitle()
