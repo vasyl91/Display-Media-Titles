@@ -18,6 +18,15 @@ object StockText {
         return text
     }
 
+    /**
+     * com.syu.music's "no title": "Unknown" (any case) or "<unknown>". Only the whole text counts,
+     * so a real title that contains the word ("Unknown Pleasures") is a title.
+     */
+    fun isUnknownPlaceholder(value: String?): Boolean {
+        val text = value?.trim() ?: return false
+        return text.equals("unknown", ignoreCase = true) || text.equals("<unknown>", ignoreCase = true)
+    }
+
     /** A file of this device: an absolute path, not a URL ("http://") or a key ("stock-radio:/"). */
     fun isLocalFile(path: String?): Boolean =
         path != null && path.length > 1 && path[0] == '/' && path[1] != '/'

@@ -40,4 +40,15 @@ class StockTextTest {
         assertEquals(".hidden", StockText.fileBaseName("/x/.hidden"))
         assertNull(StockText.fileBaseName("http://stream.example/one.mp3"))
     }
+
+    @Test
+    fun onlyTheWholePlaceholderIsComSyuMusicsNoTitle() {
+        assertTrue(StockText.isUnknownPlaceholder("Unknown"))
+        assertTrue(StockText.isUnknownPlaceholder(" unknown "))
+        assertTrue(StockText.isUnknownPlaceholder("<unknown>"))
+        assertFalse(StockText.isUnknownPlaceholder("Unknown Pleasures"))
+        assertFalse(StockText.isUnknownPlaceholder("The Unknown"))
+        assertFalse(StockText.isUnknownPlaceholder(""))
+        assertFalse(StockText.isUnknownPlaceholder(null))
+    }
 }

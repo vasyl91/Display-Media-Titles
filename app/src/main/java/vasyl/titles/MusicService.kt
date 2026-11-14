@@ -13,6 +13,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import vasyl.titles.excludeapps.AppScope
+import vasyl.titles.fyt.StockText
 import vasyl.titles.widget.isMusicPlaying
 
 /**
@@ -99,7 +100,9 @@ class MusicService : Service() {
         state = extras.getBoolean(PLAY_STATE, false)
         album = extras.getString(PLAY_ALBUM).orEmpty()
 
-        if (!music_name.contains("Unknown")) {
+        // Only the placeholder itself is "no title": contains("Unknown") also dropped real titles
+        // such as "Unknown Pleasures", which were then never shown.
+        if (!StockText.isUnknownPlaceholder(music_name)) {
             cancelPendingRemove()
             FytPlayerBus.publish(
                 FytTrack(
