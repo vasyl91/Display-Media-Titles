@@ -118,6 +118,8 @@ class NotificationListener : NotificationListenerService() {
         /** Between the checks of [SyuMusicSilence], and how many follow one audio change. */
         private const val SILENCE_CHECK_MS = 1_500L
         private const val SILENCE_CHECKS = 4
+        /** How long a session may buffer, connect, skip or seek before its title goes. */
+        private const val TRANSITIONAL_HIDE_MS = 1_500L
         private const val COVER_MAX_PX = 512
         private const val FALLBACK_ICON_PX = 256
         private const val COVER_CORNER_RATIO = 0.07f
@@ -249,6 +251,7 @@ class NotificationListener : NotificationListenerService() {
     private var fytAllowedJob: Job? = null
     private var sessionCheckJob: Job? = null
     private var silenceCheckJob: Job? = null
+    private var transitionalHideJob: Job? = null
     private var coverJob: Job? = null
     private var fytResolveJob: Job? = null
 
@@ -353,6 +356,7 @@ class NotificationListener : NotificationListenerService() {
         fytAllowedJob = null
         sessionCheckJob = null
         silenceCheckJob = null
+        transitionalHideJob = null
         coverJob = null
         fytResolveJob = null
         fytAllowed = true
@@ -524,6 +528,7 @@ class NotificationListener : NotificationListenerService() {
         controllerCallback = null
         meta = null
         currentState = null
+        cancelTransitionalHide()
     }
 
     private fun isCurrent(token: MediaSession.Token): Boolean =
@@ -547,25 +552,58 @@ class NotificationListener : NotificationListenerService() {
     private fun onControllerPlaybackStateChanged(state: PlaybackState?) {
         val newState = state?.state
         currentState = newState
-        val kind = PlaybackStates.classify(newState)
-        when {
-            // ERROR and NONE are new here: a stream that lost its connection kept its title.
-            kind == PlaybackStates.Kind.STOPPED || newState == PlaybackState.STATE_BUFFERING -> {
-                prevState = newState ?: PlaybackState.STATE_NONE
-                Helpers.counter = 0
-                if (!fytState) {
-                    hideTitle()
-                    updateWidgetPlayState(this, false)
-                }
+        when (PlaybackStates.classify(newState)) {
+            // ERROR and NONE included: a stream that lost its connection kept its title.
+            PlaybackStates.Kind.STOPPED -> {
+                cancelTransitionalHide()
+                takeControllerTitleOff(newState ?: PlaybackState.STATE_NONE)
             }
 
-            kind == PlaybackStates.Kind.PLAYING -> {
+            PlaybackStates.Kind.TRANSITIONAL -> scheduleTransitionalHide()
+
+            PlaybackStates.Kind.PLAYING -> {
+                cancelTransitionalHide()
                 set()
                 updateWidgetPlayState(this, true)
             }
 
-            else -> Unit
+            PlaybackStates.Kind.UNKNOWN -> Unit
         }
+    }
+
+    /** The session does not play ([state]): its title goes, unless the FYT player has the screen. */
+    private fun takeControllerTitleOff(state: Int) {
+        prevState = state
+        Helpers.counter = 0
+        if (!fytState) {
+            hideTitle()
+            updateWidgetPlayState(this, false)
+        }
+    }
+
+    /**
+     * Buffering, connecting, skipping or seeking: players go through these between two tracks
+     * (Spotify buffers at every track change), and the title used to go and come back each time.
+     * It now goes only if the session has not played again within [TRANSITIONAL_HIDE_MS]; the
+     * clock starts with the first of these states. While it runs prevState is left alone, so the
+     * title is not put on screen again when the session plays on.
+     */
+    private fun scheduleTransitionalHide() {
+        if (transitionalHideJob?.isActive == true) return
+        val scope = scope ?: return
+        transitionalHideJob = scope.launch {
+            delay(TRANSITIONAL_HIDE_MS)
+            transitionalHideJob = null
+            val state = currentState
+            if (PlaybackStates.classify(state) == PlaybackStates.Kind.TRANSITIONAL && state != null) {
+                takeControllerTitleOff(state)
+            }
+        }
+    }
+
+    private fun cancelTransitionalHide() {
+        transitionalHideJob?.cancel()
+        transitionalHideJob = null
     }
 
     /** Decides whether the playing media session track has to be (re)displayed. */
