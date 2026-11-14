@@ -1219,7 +1219,15 @@ class NotificationListener : NotificationListenerService() {
             text, style.width, style.height, style.marginLeft, style.yOffset, overlayType, style.textColor,
             style.bgColor, style.size, style.typeface, style.outlined, style.ttfFile?.path, style.ttfOffset, params.alpha
         )
-        if (overlayView != null && spec == overlaySpec) return true // exactly this is already on screen
+        val shown = overlayView
+        val shownSpec = overlaySpec
+        if (shown != null && spec == shownSpec) return true // exactly this is already on screen
+        if (shown is MarqueeDrawView && shownSpec != null && spec.copy(text = shownSpec.text) == shownSpec) {
+            // Only the text changed (another track): the window stays, no remove/add and no flicker.
+            shown.setText(text)
+            overlaySpec = spec
+            return true
+        }
         removeWindowView()
 
         val view = MarqueeDrawView(applicationContext).apply {
