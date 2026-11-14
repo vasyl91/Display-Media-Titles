@@ -251,10 +251,8 @@ class NotificationListener : NotificationListenerService() {
     private var prevState: Int = PlaybackState.STATE_STOPPED
 
     // FYT source
-    private var fytState = false          // player reports "playing"
-    private var fytStartPending = false   // FYT switched to "playing"; handled once the track is resolved
-    private var fytSet = false            // current FYT track has been applied
-    private var fytAllowed = true         // FYT updates are ignored shortly after another player started
+    /** The FYT player's state and what it makes the titles do (playing, shown, start, window). */
+    private val arbiter = TitleArbiter()
     private var fytInfo: FytInfo? = null
     private var fytGeneration = 0
     private var fytTotalMinutes = 0L
@@ -315,10 +313,7 @@ class NotificationListener : NotificationListenerService() {
 
         // The FYT state of an earlier connection may be stale (updates are dropped while
         // disconnected); setDefaultStatus() below restores it from FytPlayerBus.last.
-        fytState = false
-        fytStartPending = false
-        fytSet = false
-        fytAllowed = true
+        arbiter.reset()
         songPrev = null
         prevState = PlaybackState.STATE_STOPPED
         lastWidgetSong = null
@@ -386,7 +381,7 @@ class NotificationListener : NotificationListenerService() {
         transitionalHideJob = null
         coverJob = null
         fytResolveJob = null
-        fytAllowed = true
+        arbiter.allowFyt()
 
         removeWindowView()
         unregisterCompatReceiver()
@@ -494,7 +489,7 @@ class NotificationListener : NotificationListenerService() {
         if (current != null && current.sessionToken == candidate.sessionToken) return
 
         detachController()
-        if (!fytState) hideTitle()
+        if (!arbiter.fytPlaying) hideTitle()
         attachController(candidate)
     }
 
@@ -562,10 +557,7 @@ class NotificationListener : NotificationListenerService() {
         connected && mediaController?.sessionToken == token
 
     private fun onControllerSessionDestroyed() {
-        if (!fytState) {
-            hideTitle()
-            updateWidgetPlayState(this, false)
-        }
+        perform(arbiter.onControllerStopped())
         detachController()
         checkActiveSessions() // attach the next session, if there is one
     }
@@ -602,10 +594,7 @@ class NotificationListener : NotificationListenerService() {
     private fun takeControllerTitleOff(state: Int) {
         prevState = state
         Helpers.counter = 0
-        if (!fytState) {
-            hideTitle()
-            updateWidgetPlayState(this, false)
-        }
+        perform(arbiter.onControllerStopped())
     }
 
     /**
@@ -673,7 +662,7 @@ class NotificationListener : NotificationListenerService() {
                 // Starts are mostly seen by the audio playback callback (scheduleSessionCheck);
                 // this only catches what it misses, so every 2 s is enough while music plays (it
                 // was 700 ms, about 1.4 session lists a second for as long as the FYT player played).
-                if (musicActive && !PhoneListener.CALLING && (overlayView == null || fytState)) {
+                if (musicActive && !PhoneListener.CALLING && (overlayView == null || arbiter.fytPlaying)) {
                     checkActiveSessions()
                 }
                 delay(if (musicActive) WATCHDOG_ACTIVE_MS else WATCHDOG_IDLE_MS)
@@ -695,7 +684,7 @@ class NotificationListener : NotificationListenerService() {
     private fun scheduleSilenceCheck() {
         val scope = scope ?: return
         silenceCheckJob?.cancel()
-        if (!fytState) {
+        if (!arbiter.fytPlaying) {
             silenceCheckJob = null
             return
         }
@@ -705,7 +694,7 @@ class NotificationListener : NotificationListenerService() {
                 delay(SILENCE_CHECK_MS)
                 val last = FytPlayerBus.last.value
                 val musicActive = audioManager?.isMusicActive == true
-                when (SyuMusicSilence.check(last, fytState, changedAt, musicActive)) {
+                when (SyuMusicSilence.check(last, arbiter.fytPlaying, changedAt, musicActive)) {
                     SyuMusicSilence.Verdict.WAIT -> Unit
                     SyuMusicSilence.Verdict.STOPPED -> {
                         Log.i(TAG, "com.syu.music fell silent without saying it stopped: '${last?.title}' removed")
@@ -746,9 +735,7 @@ class NotificationListener : NotificationListenerService() {
         // A 7870 stock source always sends its title; without one there is nothing to show, and
         // the state must not change for it (com.syu.music's updates are checked by their path).
         if (track.origin.is7870Stock && StockText.validTag(track.title) == null) return
-        if (track.playing && !fytState) fytStartPending = true
-        fytState = track.playing
-        if (!track.playing) fytStartPending = false
+        arbiter.onFytUpdate(track.playing)
         fytCurMinutes = track.positionMs
         if (track.path.isBlank()) {
             // "Not playing" without a track (a player that closed) still means nothing plays.
@@ -772,63 +759,34 @@ class NotificationListener : NotificationListenerService() {
 
     /** The FYT player does not play and its update cannot be resolved: the title on screen goes. */
     private fun hideStoppedFyt() {
-        if (!fytSet) return
-        fytSet = false
-        if (currentState != PlaybackState.STATE_PLAYING) {
-            hideTitle()
-            updateWidgetPlayState(this, false)
-        }
+        perform(arbiter.onFytUnresolvedStop(controllerPlaying = currentState == PlaybackState.STATE_PLAYING))
     }
 
     private fun applyFytUpdate(info: FytInfo) {
         fytInfo = info
         fytTotalMinutes = info.durationMs
-
-        // FYT has priority when it STARTS playing: the other player is paused once. The FYT player
-        // keeps reporting "playing" for a moment after another app took the audio focus (it pauses
-        // itself right after); those late updates used to pause the app that had just started.
-        // Within the handover window (fytAllowed == false) the start is dropped entirely.
-        if (fytStartPending && fytState) {
-            fytStartPending = false
-            // Not for the 7870's stock sources: this app only reads them, and com.syu.media takes
-            // and gives up the audio focus by itself. A late "playing" must never pause an app.
-            if (fytAllowed && !info.origin.is7870Stock) pauseOtherPlayer()
-        }
-
-        // What is applied now, before another track resets it: one update that brings another track
-        // and "paused" together (the end of a playlist) must still hide the title on screen.
-        val wasSet = fytSet
-
-        // Another track than the one on screen -> it has to be applied again.
-        if (song != info.title && song != info.fileName) fytSet = false
-
-        if (fytState && !fytSet && fytAllowed) {
-            fytSet = true
-            if (currentState == PlaybackState.STATE_PLAYING || currentState == PlaybackState.STATE_STOPPED) {
-                hideTitle()
-            }
-            updateWidgetPlayState(this, true)
-            setStatus(MEDIA_SOURCE_FYT)
-            // Shown again from an old update (after a reconnect, say), com.syu.music may long have
-            // stopped: its sound tells (SyuMusicSilence).
-            if (!info.origin.is7870Stock) scheduleSilenceCheck()
-        }
-        if (!fytState && (fytSet || wasSet)) {
-            fytSet = false
-            if (currentState != PlaybackState.STATE_PLAYING) {
-                hideTitle()
-                updateWidgetPlayState(this, false)
-            }
-        }
+        // The title on screen is this track's (a new track has to be applied again).
+        val sameTrack = song == info.title || song == info.fileName
+        perform(arbiter.onFytResolved(sameTrack, info.origin.is7870Stock, currentState))
     }
 
     private fun onFytRemove() {
-        fytState = false // was never reset before, so a stopped FYT player kept "priority"
-        fytStartPending = false
-        fytSet = false
-        if (currentState != PlaybackState.STATE_PLAYING) {
-            hideTitle()
-            updateWidgetPlayState(this, false)
+        perform(arbiter.onFytRemove(controllerPlaying = currentState == PlaybackState.STATE_PLAYING))
+    }
+
+    /** Carries out [TitleArbiter]'s decisions, in their order. */
+    private fun perform(actions: List<TitleArbiter.Action>) {
+        for (action in actions) {
+            when (action) {
+                TitleArbiter.Action.PAUSE_OTHER -> pauseOtherPlayer()
+                TitleArbiter.Action.HIDE -> hideTitle()
+                TitleArbiter.Action.SHOW_FYT -> setStatus(MEDIA_SOURCE_FYT)
+                TitleArbiter.Action.WIDGET_PLAYING -> updateWidgetPlayState(this, true)
+                TitleArbiter.Action.WIDGET_PAUSED -> updateWidgetPlayState(this, false)
+                // Shown again from an old update (after a reconnect, say), com.syu.music may long
+                // have stopped: its sound tells (SyuMusicSilence).
+                TitleArbiter.Action.CHECK_SILENCE -> scheduleSilenceCheck()
+            }
         }
     }
 
@@ -846,16 +804,16 @@ class NotificationListener : NotificationListenerService() {
     }
 
     private fun blockFytTemporarily() {
-        fytAllowed = false
+        arbiter.blockFyt()
         fytAllowedJob?.cancel()
         val scope = scope
         if (scope == null) {
-            fytAllowed = true
+            arbiter.allowFyt()
             return
         }
         fytAllowedJob = scope.launch {
             delay(FYT_BLOCK_AFTER_CONTROLLER_MS)
-            fytAllowed = true
+            arbiter.allowFyt()
         }
     }
 
@@ -986,11 +944,11 @@ class NotificationListener : NotificationListenerService() {
             } else {
                 // The last FYT state is only restored when no media session is playing. It can be
                 // stale (e.g. the FYT player was killed while playing and never sent "stopped");
-                // replaying it would pause the player that actually plays and keep fytState stuck.
+                // replaying it would pause the player that actually plays and keep the FYT state stuck.
                 // Live FYT updates still take priority through onFytData().
                 val lastFyt = FytPlayerBus.last.value
                 if (lastFyt != null && lastFyt.playing) {
-                    fytSet = false
+                    arbiter.forgetShown()
                     onFytData(lastFyt)
                 }
             }
@@ -1004,15 +962,13 @@ class NotificationListener : NotificationListenerService() {
      */
     fun setStatus(mediaSource: Int) {
         if (!connected) return
-        if (mediaSource == MEDIA_SOURCE_CONTROLLER) {
-            fytState = false
-            fytSet = true
-        }
+        if (mediaSource == MEDIA_SOURCE_CONTROLLER) arbiter.onControllerShown()
         val content = when {
-            fytState && fytAllowed && (mediaSource == MEDIA_SOURCE_ANY || mediaSource == MEDIA_SOURCE_FYT) ->
+            arbiter.fytPlaying && arbiter.fytAllowed &&
+                (mediaSource == MEDIA_SOURCE_ANY || mediaSource == MEDIA_SOURCE_FYT) ->
                 buildFytContent()
 
-            !fytState && (mediaSource == MEDIA_SOURCE_ANY || mediaSource == MEDIA_SOURCE_CONTROLLER) ->
+            !arbiter.fytPlaying && (mediaSource == MEDIA_SOURCE_ANY || mediaSource == MEDIA_SOURCE_CONTROLLER) ->
                 buildControllerContent()
 
             else -> null
