@@ -635,14 +635,33 @@ class NotificationListener : NotificationListenerService() {
         fytState = track.playing
         if (!track.playing) fytStartPending = false
         fytCurMinutes = track.positionMs
-        if (track.path.isBlank()) return
+        if (track.path.isBlank()) {
+            // "Not playing" without a track (a player that closed) still means nothing plays.
+            if (!track.playing) hideStoppedFyt()
+            return
+        }
         val scope = scope ?: return
 
         val generation = ++fytGeneration
         fytResolveJob?.cancel()
         fytResolveJob = scope.launch {
-            val info = withContext(Dispatchers.IO) { resolveFytInfo(track) } ?: return@launch
-            if (generation == fytGeneration) applyFytUpdate(info)
+            val info = withContext(Dispatchers.IO) { resolveFytInfo(track) }
+            if (generation != fytGeneration) return@launch
+            if (info != null) {
+                applyFytUpdate(info)
+            } else if (!track.playing) {
+                hideStoppedFyt() // its file is gone, but it does not play either
+            }
+        }
+    }
+
+    /** The FYT player does not play and its update cannot be resolved: the title on screen goes. */
+    private fun hideStoppedFyt() {
+        if (!fytSet) return
+        fytSet = false
+        if (currentState != PlaybackState.STATE_PLAYING) {
+            hideTitle()
+            updateWidgetPlayState(this, false)
         }
     }
 
