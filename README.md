@@ -1,6 +1,6 @@
-# Display Media Titles for FYT 7862/8581 + universal music widget
+# Display Media Titles for FYT 7862/8581/7870 + universal music widget
 
-Android app for FYT 7862/8581 displaying media titles on status bar. App also offers an universal music widget. It displays also artist name if it's present in the metadata. Should work on Android 8 and above. The app was tested on Android 10 on FYT UIS7862 and on Android 15 on phone. Display Media Titles should work on most of the devices, however it was created exclusively for FYT 7862/8581 so it might misbehave on other devices.
+Android app for FYT 7862/8581/7870 displaying media titles on status bar. App also offers an universal music widget. It displays also artist name if it's present in the metadata. Should work on Android 8 and above. The app was tested on Android 10 on FYT UIS7862 and on Android 15 on phone. Display Media Titles should work on most of the devices, however it was created exclusively for FYT 7862/8581 so it might misbehave on other devices.
 
 App works with the players that use MediaController which means that it should get along with most of the available music apps. 
 
@@ -58,7 +58,7 @@ Check this [tutorial](https://www.youtube.com/watch?v=H3tnNVyCJfk) in case you h
 		
 		If you pick up the font .ttf on the phone and everything seems to be fine but eventually the font isn't loaded then make sure that you're using the stock file manager (com.google.android.documentsui) and allow the app to `Change system settings`.
 
-* Displaying media titles from stock FYT's music player:
+* Displaying media titles from stock FYT's music player (FYT 7862/8581, `com.syu.music`):
 
 	FYT manufacturers have designed connection between the stock music app (com.syu.music) and the target apps (current default launcher and few more - probably specific to the music app version) that depends on intents adressed for specific package. That means that there is no way to directly intercept the existing message. Fortunately I found few workarounds. 
 
@@ -75,6 +75,18 @@ Check this [tutorial](https://www.youtube.com/watch?v=H3tnNVyCJfk) in case you h
 	- `cn.teyes.online`
 
 	Always check if the package you have chosen is not already installed! Other way you can mess your unit. 
+
+* Displaying media titles from the stock sources of the FYT 7870:
+
+	On the FYT 7870 the stock player is `com.syu.media`. Display Media Titles reads it directly, so neither a modified launcher nor one of the package variants above is needed. Its firmware is not signed with the platform key, so use the standard variant (`display_media_titles_standard.apk`); it needs no storage access for this.
+
+	What is shown (only while it actually plays; paused or stopped means no title):
+	- music played by `com.syu.media` (local files and USB): title and artist as the player reports them, or the file name with the `File name` setting,
+	- internet radio of `com.syu.media`: the station's name,
+	- FM / AM radio: the station's RDS name, otherwise its frequency,
+	- Bluetooth audio from the phone: title and artist, when the phone sends them.
+
+	Limitations: the app only reads these sources, so the widget's buttons do nothing for them. The covers of radio stations and of Bluetooth songs are not shown. The FYT 7870 is recognised by its chipset; other units keep working as before.
 
 ## Generating app in Android Studio
 

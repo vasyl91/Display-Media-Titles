@@ -75,7 +75,10 @@ import kotlin.math.roundToInt
  *
  * Sources:
  *  - media sessions of regular players ([MediaController]),
- *  - the FYT player (com.syu.music), which has no media session and reports through [MusicService].
+ *  - the FYT player (com.syu.music), which has no media session and reports through [MusicService],
+ *  - on the FYT 7870 (by its chipset) its stock sources, read by [Stock7870Source]: com.syu.media's
+ *    music and internet radio, BT audio and the radio. They take the FYT player's place, and
+ *    com.syu.media's own session (no metadata) is left out.
  *
  * Threading: everything that touches state or windows runs on the main thread. File access, bitmap
  * decoding and scaling run on [Dispatchers.IO] inside [scope], which only lives between
