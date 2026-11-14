@@ -1127,7 +1127,11 @@ class MainActivity : AppCompatActivity() {
     fun setPrivilegedHelper(v: View?) {
         val enabled = mPrivilegedHelper.isChecked
         settings.edit { putBoolean(PrivilegedShell.PREF_ENABLED, enabled) }
-        if (!enabled) return
+        if (!enabled) {
+            // The touch opacity limit goes back at once.
+            NotificationListener.onPrivilegedHelperChanged(this, false)
+            return
+        }
         PrivilegedShell.requestShizukuPermission { granted ->
             if (granted) {
                 onPrivilegedHelperReady()
@@ -1144,6 +1148,7 @@ class MainActivity : AppCompatActivity() {
     private fun onPrivilegedHelperReady() {
         Log.i(TAG, "Shizuku / root turned on")
         PrivilegedGrants.grantMissing(this) { if (!isFinishing) refreshPermissionButtons() }
+        NotificationListener.onPrivilegedHelperChanged(this, true)
     }
 
     /** The setting's row is shown when it can be used, and always while it is on (to turn it off). */

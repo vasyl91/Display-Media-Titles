@@ -64,12 +64,23 @@ object Privileges {
      *
      * A non-privileged overlay (TYPE_APPLICATION_OVERLAY, "standard" flavor) can't be trusted, so it is
      * made touchable to stay fully opaque: touches inside its rectangle no longer reach the app below.
-     * That window lies below the status bar, so the status bar itself stays touchable.
+     * That window lies below the status bar, so the status bar itself stays touchable. Only while the
+     * limit is full ([limitFull]: raised through Shizuku / root, see OverlayAlpha) does it stay
+     * not touchable, opaque and passing touches.
      */
-    fun applyOverlayTouchMode(context: Context, params: WindowManager.LayoutParams, privileged: Boolean) {
+    fun applyOverlayTouchMode(
+        context: Context,
+        params: WindowManager.LayoutParams,
+        privileged: Boolean,
+        limitFull: Boolean = false,
+    ) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
         if (!privileged) {
-            params.flags = params.flags and WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE.inv()
+            params.flags = if (limitFull) {
+                params.flags or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+            } else {
+                params.flags and WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE.inv()
+            }
             return
         }
         if (markTrustedOverlay(params)) return

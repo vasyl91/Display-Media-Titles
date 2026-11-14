@@ -57,6 +57,7 @@ import vasyl.titles.fyt.Stock7870Source
 import vasyl.titles.fyt.StockText
 import vasyl.titles.fyt.SyuMediaProtocol
 import vasyl.titles.helpers.Helpers
+import vasyl.titles.privileged.OverlayAlpha
 import vasyl.titles.helpers.MarqueeDrawView
 import vasyl.titles.receivers.PhoneListener
 import vasyl.titles.widget.FolderCover
@@ -175,6 +176,23 @@ class NotificationListener : NotificationListenerService() {
          * Display settings changed (titles on/off, artist, FYT title source, excluded apps): the
          * current player is re-evaluated immediately instead of after the usual delay.
          */
+        /**
+         * "Use Shizuku / root" was turned on or off: a title on screen gets the touch opacity limit
+         * raised, or the limit goes back at once. Safe to call from any thread.
+         */
+        @JvmStatic
+        fun onPrivilegedHelperChanged(context: Context, enabled: Boolean) {
+            val app = context.applicationContext
+            Handler(Looper.getMainLooper()).post {
+                val service = instanceRef?.get()
+                if (enabled) {
+                    if (service?.overlayView != null) OverlayAlpha.onWindowShown(app)
+                } else {
+                    OverlayAlpha.onWindowHiddenNow(app)
+                }
+            }
+        }
+
         @JvmStatic
         fun refreshNow() {
             val service = instanceRef?.get() ?: return
@@ -214,6 +232,9 @@ class NotificationListener : NotificationListenerService() {
     private var overlayType = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
     private var statusBarHeight = 0
     private var overlayView: View? = null
+    /** The layout of [overlayView], for switching its touch mode when the opacity limit changes. */
+    private var overlayParams: WindowManager.LayoutParams? = null
+    private val obscuringLimitListener: (Boolean) -> Unit = { full -> onObscuringLimitChanged(full) }
     private var overlaySpec: OverlaySpec? = null
     /** Track shown by [overlayView]; null when nothing or only the settings preview is on screen. */
     private var displayedContent: StatusContent? = null
@@ -268,6 +289,9 @@ class NotificationListener : NotificationListenerService() {
         super.onCreate()
         setInstance(this)
         updateWidgetPlayState(this, false)
+        // A process that died with the touch opacity limit raised: it goes back now.
+        OverlayAlpha.listener = obscuringLimitListener
+        OverlayAlpha.onWindowHiddenNow(this)
     }
 
     override fun onListenerConnected() {
@@ -337,6 +361,8 @@ class NotificationListener : NotificationListenerService() {
         // Not in disconnectInternal(), which also runs at the start of every connect.
         Stock7870Source.stop()
         disconnectInternal()
+        OverlayAlpha.onWindowHiddenNow(this)
+        if (OverlayAlpha.listener === obscuringLimitListener) OverlayAlpha.listener = null
         if (instanceRef?.get() === this) instanceRef = null
         super.onDestroy()
     }
@@ -1217,7 +1243,7 @@ class NotificationListener : NotificationListenerService() {
                 layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
             }
         }
-        Privileges.applyOverlayTouchMode(this, params, privileged)
+        Privileges.applyOverlayTouchMode(this, params, privileged, OverlayAlpha.isLimitFull(this))
 
         val spec = OverlaySpec(
             text, style.width, style.height, style.marginLeft, style.yOffset, overlayType, style.textColor,
@@ -1256,7 +1282,10 @@ class NotificationListener : NotificationListenerService() {
         return try {
             windowManager.addView(view, params)
             overlayView = view
+            overlayParams = params
             overlaySpec = spec
+            // Standard flavor with "Use Shizuku / root": the touch opacity limit goes to 1.
+            OverlayAlpha.onWindowShown(this)
             true
         } catch (e: WindowManager.BadTokenException) {
             Log.e(TAG, "Overlay rejected (missing overlay permission?)", e)
@@ -1282,6 +1311,25 @@ class NotificationListener : NotificationListenerService() {
         return base + getString(R.string.space)
     }
 
+    /**
+     * The touch opacity limit changed (OverlayAlpha): the standard flavor's window lets touches
+     * through at full opacity only while it is full, otherwise it is touchable to stay opaque.
+     */
+    private fun onObscuringLimitChanged(full: Boolean) {
+        val view = overlayView ?: return
+        val params = overlayParams ?: return
+        if (privileged || Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
+        val before = params.flags
+        Privileges.applyOverlayTouchMode(this, params, privileged, full)
+        if (params.flags == before) return
+        try {
+            windowManager.updateViewLayout(view, params)
+            Log.i(TAG, "Overlay ${if (full) "lets touches through" else "takes touches"}: limit ${if (full) "full" else "below 1"}")
+        } catch (e: RuntimeException) {
+            Log.w(TAG, "Cannot update the overlay's touch mode", e)
+        }
+    }
+
     /** Removes whatever overlay is shown, including the settings preview. */
     fun removeWindowView() {
         previewShowing = false
@@ -1290,7 +1338,9 @@ class NotificationListener : NotificationListenerService() {
         displayedContent = null
         val view = overlayView ?: return
         overlayView = null
+        overlayParams = null
         overlaySpec = null
+        OverlayAlpha.onWindowHidden(this)
         try {
             windowManager.removeViewImmediate(view)
         } catch (e: IllegalArgumentException) {
